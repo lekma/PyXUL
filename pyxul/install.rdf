@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+#filter substitution
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+    <Description about="urn:mozilla:install-manifest">
+
+        <em:id>@PYXUL_ID@</em:id>
+        <em:version>@PYXUL_VERSION@</em:version>
+        <em:type>2</em:type>
+        <em:unpack>true</em:unpack>
+        <em:multiprocessCompatible>true</em:multiprocessCompatible>
+
+        <em:name>PyXUL</em:name>
+        <em:description>Python for XUL</em:description>
+
+        <em:targetApplication>
+            <Description>
+                <em:id>toolkit@mozilla.org</em:id>
+                <em:minVersion>@TOOLKIT_MINVERSION@</em:minVersion>
+                <em:maxVersion>@TOOLKIT_MAXVERSION@</em:maxVersion>
+            </Description>
+        </em:targetApplication>
+
+    </Description>
+
+</RDF>
+

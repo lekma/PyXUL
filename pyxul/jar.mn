@@ -1,0 +1,5 @@
+pyxul.jar:
+% content pyxul %content/
+    content/pyxul.xml    (content/pyxul.xml)
+    content/pyxul.css    (content/pyxul.css)
+
