@@ -520,7 +520,6 @@ Execute(
                 if ((globals = PyModule_GetDict(main))) { // borrowed
                     Py_INCREF(globals); // +1
                     if (
-                        !_PyDict_SetItemId(globals, &PyId_window, window) &&
                         __file__(
                             aSrc, aOriginCharset, aBaseURI, getter_AddRefs(aFile)
                         ) &&

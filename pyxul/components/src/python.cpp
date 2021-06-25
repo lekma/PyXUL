@@ -189,10 +189,18 @@ _xpcom_importModule(PyObject *module, PyObject *args)
 }
 
 
+static PyObject *
+_xpcom_getGlobal(PyObject *module, PyObject *Py_UNUSED(ignored))
+{
+    return xpc::GetGlobalJSObject();
+}
+
+
 /* _xpcom_def.m_methods */
 static PyMethodDef _xpcom_m_methods[] = {
     {"throwResult", (PyCFunction)_xpcom_throwResult, METH_O, nullptr},
     {"importModule", (PyCFunction)_xpcom_importModule, METH_VARARGS, nullptr},
+    {"getGlobal", (PyCFunction)_xpcom_getGlobal, METH_NOARGS, nullptr},
     {nullptr} /* Sentinel */
 };
 
@@ -625,8 +633,8 @@ _set_loader(PyObject *globals, PyObject *path, const char *loader_name)
             if (loader_type) { // +1
                 loader = PyObject_CallFunction(
                     loader_type, "sO", "__main__", path
-                );
-                if (loader) { // +1
+                ); // +1
+                if (loader) {
                     res = _PyDict_SetItemId(globals, &PyId___loader__, loader);
                     Py_DECREF(loader); // - 1
                 }
