@@ -38,6 +38,8 @@ LOCAL_INCLUDES += [
 ]
 
 EXTRA_COMPONENTS += [
-    "dist-packages"
+    "about.manifest",
+    "about.py",
+    "dist-packages",
 ]
 

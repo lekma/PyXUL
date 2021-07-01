@@ -61,6 +61,9 @@ class ClassInfo(Interfaces):
         return None
 
 
+# ------------------------------------------------------------------------------
+# GetFactory
+
 class Factory(Interfaces):
 
     interfaces = [Ci.nsIFactory]
