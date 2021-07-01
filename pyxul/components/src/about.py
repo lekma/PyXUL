@@ -52,15 +52,15 @@ about = f"""<?xml version="1.0" encoding="UTF-8"?>
             </tr>
             <tr>
                 <td><b>paths</b></td>
-                <td>{'<br />'.join(sys.path)}</td>
+                <td>{"<br />".join(sys.path)}</td>
             </tr>
             <tr>
                 <td><b>modules</b></td>
-                <td>{', '.join(sorted(sys.modules.keys()))}</td>
+                <td>{", ".join(sorted(sys.modules.keys()))}</td>
             </tr>
             <tr>
                 <td><b>environment</b></td>
-                <td>{'<br />'.join((f'{k}={v}' for k, v in sorted(os.environ.items())))}</td>
+                <td>{"<br />".join((f'{k}={v}' for k, v in sorted(os.environ.items())))}</td>
             </tr>
         </table>
     </body>
