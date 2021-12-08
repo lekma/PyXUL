@@ -120,6 +120,28 @@ pyRuntime::~pyRuntime()
 }
 
 
+namespace { // anonymous
+
+
+static JSObject *
+__jsglobal__(void)
+{
+    nsIGlobalObject *aGlobal = nullptr;
+
+    if (
+        !(aGlobal = dom::GetCurrentGlobal()) &&
+        !(aGlobal = dom::GetIncumbentGlobal()) &&
+        !(aGlobal = dom::GetEntryGlobal())
+    ) {
+        return nullptr;
+    }
+    return aGlobal->GetGlobalJSObject();
+}
+
+
+} // namespace anonymous
+
+
 bool
 pyRuntime::Initialize()
 {
@@ -135,6 +157,13 @@ pyRuntime::Initialize()
     rv = aObserverService->AddObserver(this, PY_RUNTIME_CLEANUP_TOPIC, false);
     NS_ENSURE_SUCCESS(rv, false);
 
+    // init mGlobal
+    AutoJSContext aCx;
+    mGlobal.init(aCx, __jsglobal__());
+    if (!mGlobal || !JS_InitStandardClasses(aCx, mGlobal)) {
+        return false;
+    }
+
     // load Python
     if (!(libname = PR_GetLibraryName(nullptr, PYTHON_LIBNAME))) {
         return false;
@@ -143,6 +172,7 @@ pyRuntime::Initialize()
     libspec.value.pathname = libname;
     mPythonLibrary = PR_LoadLibraryWithFlags(libspec, PR_LD_LAZY | PR_LD_GLOBAL);
     PR_FreeLibraryName(libname);
+
     return mPythonLibrary ? xpc::Initialize() : false;
 }
 
@@ -151,6 +181,8 @@ void
 pyRuntime::Finalize()
 {
     mWindowIDs.Clear();
+
+    mGlobal = nullptr;
 
     // unload Python
     if (mPythonLibrary) {
@@ -165,6 +197,19 @@ pyRuntime::Finalize()
         aObserverService->RemoveObserver(this, PY_RUNTIME_CLEANUP_TOPIC);
         aObserverService->RemoveObserver(this, PY_RUNTIME_FINALIZE_TOPIC);
     }
+}
+
+
+/* public ------------------------------------------------------------------- */
+
+JSObject *
+pyRuntime::GetGlobalJSObject(JSContext *aCx)
+{
+    JS::RootedObject aGlobal(aCx, __jsglobal__());
+    if (!aGlobal && sRuntime) {
+        return sRuntime->mGlobal;
+    }
+    return aGlobal;
 }
 
 

@@ -21,6 +21,7 @@
 #include "errors.h"
 #include "modules.h"
 #include "python.h"
+#include "runtime.h"
 
 #include "wrappers/api.h"
 
@@ -144,39 +145,18 @@ WrapJS(JSContext *aCx, JSObject *aObject, const nsIID &aIID, void **aResult)
 }
 
 
-namespace { // anonymous
-
-
-static JSObject *
-__global__(void)
-{
-    nsIGlobalObject *aGlobal = nullptr;
-
-    if (
-        !(aGlobal = dom::GetCurrentGlobal()) &&
-        !(aGlobal = dom::GetIncumbentGlobal()) &&
-        !(aGlobal = dom::GetEntryGlobal())
-    ) {
-        PyErr_SetString(errors::XPCOMError, "Failed to get global object");
-        return nullptr;
-    }
-    return aGlobal->GetGlobalJSObject();
-}
-
-
-} // namespace anonymous
-
-
 PyObject *
 GetGlobalJSObject(void)
 {
     AutoJSContext aCx;
     AutoReporter ar(aCx);
 
-    JS::RootedObject aGlobal(aCx, __global__());
+    JS::RootedObject aGlobal(aCx, pyRuntime::GetGlobalJSObject(aCx));
     if (aGlobal) {
+        //EnableUniversalXPConnect??
         return pyjs::WrapObject(aCx, &aGlobal);
     }
+    PyErr_SetString(errors::XPCOMError, "Failed to get global object");
     return nullptr;
 }
 
@@ -513,7 +493,7 @@ Execute(
         dom::AutoEntryScript aes(aGlobal, "pyxul::xpc::Execute");
         JSContext *aCx = aes.cx();
         AutoReporter ar(aCx);
-        JS::RootedObject aWindow(aCx, aGlobal->GetGlobalJSObject());
+        JS::RootedObject aWindow(aCx, Unwrap(aGlobal->GetGlobalJSObject()));
         if (aWindow && (window = pyjs::WrapObject(aCx, &aWindow))) { // +1
             if ((main = PyImport_AddModule("__main__"))) { // borrowed
                 Py_INCREF(main); // +1

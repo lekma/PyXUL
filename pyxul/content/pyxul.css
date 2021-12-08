@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+.console-row-msg {
+    font-family: monospace !important;
+}
 
+
+/* python */
 python {
     -moz-binding: url("chrome://pyxul/content/pyxul.xml#python");
     display: none !important;
-}
-
-.console-row-msg {
-    font-family: monospace !important;
 }
 

@@ -56,6 +56,7 @@ namespace pyxul {
         );
 
         PyObject *GetGlobalJSObject();
+
         bool ImportModule(const char *aUri, PyObject *aTarget);
 
         bool ReportError();

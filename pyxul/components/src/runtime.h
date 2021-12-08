@@ -20,6 +20,7 @@
 #define __pyxul_runtime_h__
 
 
+#include "pyxul/jsapi.h"
 #include "pyxul/xpcom.h"
 
 #include "mozilla/ModuleLoader.h"
@@ -58,6 +59,8 @@ namespace pyxul {
             );
 
 
+            static JSObject *GetGlobalJSObject(JSContext *aCx);
+
             static already_AddRefed<pyRuntime> GetRuntime();
 
         private:
@@ -70,6 +73,7 @@ namespace pyxul {
 
 
             PRLibrary *mPythonLibrary;
+            JS::PersistentRootedObject mGlobal;
             nsTArray<uint64_t> mWindowIDs;
 
             static mozilla::StaticRefPtr<pyRuntime> sRuntime;
