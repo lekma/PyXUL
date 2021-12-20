@@ -169,7 +169,10 @@ Object::__compare__(Object *self, PyObject *aOther, int op)
     }
     JS::RootedValue aSelfVal(aCx, JS::ObjectValue(*self->mJSObject));
     JS::RootedValue aOtherVal(aCx, JS::ObjectValue(*aOtherObj));
-    if (!JS_StrictlyEqual(aCx, aSelfVal, aOtherVal, &equals)) {
+    if (
+        !JS_WrapValue(aCx, &aOtherVal) ||
+        !JS_StrictlyEqual(aCx, aSelfVal, aOtherVal, &equals)
+    ) {
         return nullptr;
     }
     if (equals) {
