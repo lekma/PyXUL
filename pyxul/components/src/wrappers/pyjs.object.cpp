@@ -2058,7 +2058,10 @@ Object::Callable::__call__(JSContext *aCx, Object *self, PyObject *aArgs)
         return nullptr;
     }
     JS::RootedValue aFunction(aCx, JS::ObjectValue(*self->mJSObject));
-    if (JS::IsClassConstructor(self->mJSObject)) {
+    if (
+        JS::IsConstructor(self->mJSObject) ||
+        JS::IsClassConstructor(self->mJSObject)
+    ) {
         JS::RootedObject aResult(aCx);
         if (!JS::Construct(aCx, aFunction, aJSArgs, &aResult)) {
             return nullptr;
@@ -2069,7 +2072,11 @@ Object::Callable::__call__(JSContext *aCx, Object *self, PyObject *aArgs)
         return WrapObject(aCx, &aResult);
     }
     JS::RootedValue aResult(aCx, JS::UndefinedValue());
-    if (!JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)) {
+    // JS_WrapObject wraps mThis into the context's compartment
+    if (
+        !JS_WrapObject(aCx, &self->mThis) ||
+        !JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)
+    ) {
         return nullptr;
     }
     if (aResult.isUndefined()) {
