@@ -59,7 +59,7 @@ namespace pyxul {
             );
 
 
-            static JSObject *GetJSGlobalObject(JSContext *aCx);
+            static JSObject *GetJSGlobal(JSContext *aCx);
 
             static already_AddRefed<pyRuntime> GetRuntime();
 
@@ -73,7 +73,7 @@ namespace pyxul {
 
 
             PRLibrary *mPythonLibrary;
-            JS::PersistentRootedObject mGlobal;
+            JS::PersistentRootedObject mJSGlobal;
             nsTArray<uint64_t> mWindowIDs;
 
             static mozilla::StaticRefPtr<pyRuntime> sRuntime;

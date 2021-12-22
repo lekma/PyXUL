@@ -157,10 +157,10 @@ pyRuntime::Initialize()
     rv = aObserverService->AddObserver(this, PY_RUNTIME_CLEANUP_TOPIC, false);
     NS_ENSURE_SUCCESS(rv, false);
 
-    // init mGlobal
+    // init mJSGlobal
     AutoJSContext aCx;
-    mGlobal.init(aCx, __jsglobal__());
-    if (!mGlobal || !JS_InitStandardClasses(aCx, mGlobal)) {
+    mJSGlobal.init(aCx, __jsglobal__());
+    if (!mJSGlobal || !JS_InitStandardClasses(aCx, mJSGlobal)) {
         return false;
     }
 
@@ -182,7 +182,7 @@ pyRuntime::Finalize()
 {
     mWindowIDs.Clear();
 
-    mGlobal = nullptr;
+    mJSGlobal = nullptr;
 
     // unload Python
     if (mPythonLibrary) {
@@ -203,13 +203,13 @@ pyRuntime::Finalize()
 /* public ------------------------------------------------------------------- */
 
 JSObject *
-pyRuntime::GetJSGlobalObject(JSContext *aCx)
+pyRuntime::GetJSGlobal(JSContext *aCx)
 {
-    JS::RootedObject aGlobal(aCx, __jsglobal__());
-    if (!aGlobal && sRuntime) {
-        return sRuntime->mGlobal;
+    JS::RootedObject aJSGlobal(aCx, __jsglobal__());
+    if (!aJSGlobal && sRuntime) {
+        return sRuntime->mJSGlobal;
     }
-    return aGlobal;
+    return aJSGlobal;
 }
 
 

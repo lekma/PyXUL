@@ -192,7 +192,7 @@ _xpcom_importModule(PyObject *module, PyObject *args)
 static PyObject *
 _xpcom_getJSGlobal(PyObject *module, PyObject *Py_UNUSED(ignored))
 {
-    return xpc::GetJSGlobalObject();
+    return xpc::GetJSGlobal();
 }
 
 
@@ -222,7 +222,7 @@ _xpcom_init(PyObject *module)
     PyObject *global = nullptr, *components = nullptr;
     int res = -1;
 
-    if ((global = xpc::GetJSGlobalObject())) { // +1
+    if ((global = xpc::GetJSGlobal())) { // +1
         if ((components = _PyObject_GetAttrId(global, &PyId_Components))) { // +1
             if (!_PyModule_AddObject(module, PyId_Components.string, components)) {
                 res = 0;

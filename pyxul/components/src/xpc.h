@@ -55,7 +55,7 @@ namespace pyxul {
             JSContext *aCx, JSObject *aObject, const nsIID &aIID, void **aResult
         );
 
-        PyObject *GetJSGlobalObject();
+        PyObject *GetJSGlobal();
 
         bool ImportModule(const char *aUri, PyObject *aTarget);
 
