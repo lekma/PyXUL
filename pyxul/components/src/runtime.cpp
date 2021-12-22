@@ -203,7 +203,7 @@ pyRuntime::Finalize()
 /* public ------------------------------------------------------------------- */
 
 JSObject *
-pyRuntime::GetGlobalJSObject(JSContext *aCx)
+pyRuntime::GetJSGlobalObject(JSContext *aCx)
 {
     JS::RootedObject aGlobal(aCx, __jsglobal__());
     if (!aGlobal && sRuntime) {

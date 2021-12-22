@@ -109,10 +109,10 @@ Object::__getattr__(JSContext *aCx, Object *self, const char *aName)
         PY_ENSURE_TRUE(
             aJSObject, nullptr, errors::JSError, "JS_GetProperty() returned null"
         );
-        /*if (JS::IsCallable(aJSObject)) {
+        if (JS::IsCallable(aJSObject)) {
             return WrapObject(aCx, &aJSObject, self->mJSObject);
-        }*/
-        return WrapObject(aCx, &aJSObject, self->mJSObject);
+        }
+        return WrapObject(aCx, &aJSObject);
     }
     return Wrap(aCx, aResult);
 }

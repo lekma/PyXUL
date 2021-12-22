@@ -190,9 +190,9 @@ _xpcom_importModule(PyObject *module, PyObject *args)
 
 
 static PyObject *
-_xpcom_getGlobal(PyObject *module, PyObject *Py_UNUSED(ignored))
+_xpcom_getJSGlobal(PyObject *module, PyObject *Py_UNUSED(ignored))
 {
-    return xpc::GetGlobalJSObject();
+    return xpc::GetJSGlobalObject();
 }
 
 
@@ -200,7 +200,7 @@ _xpcom_getGlobal(PyObject *module, PyObject *Py_UNUSED(ignored))
 static PyMethodDef _xpcom_m_methods[] = {
     {"throwResult", (PyCFunction)_xpcom_throwResult, METH_O, nullptr},
     {"importModule", (PyCFunction)_xpcom_importModule, METH_VARARGS, nullptr},
-    {"getGlobal", (PyCFunction)_xpcom_getGlobal, METH_NOARGS, nullptr},
+    {"getJSGlobal", (PyCFunction)_xpcom_getJSGlobal, METH_NOARGS, nullptr},
     {nullptr} /* Sentinel */
 };
 
@@ -222,7 +222,7 @@ _xpcom_init(PyObject *module)
     PyObject *global = nullptr, *components = nullptr;
     int res = -1;
 
-    if ((global = xpc::GetGlobalJSObject())) { // +1
+    if ((global = xpc::GetJSGlobalObject())) { // +1
         if ((components = _PyObject_GetAttrId(global, &PyId_Components))) { // +1
             if (!_PyModule_AddObject(module, PyId_Components.string, components)) {
                 res = 0;

@@ -146,12 +146,12 @@ WrapJS(JSContext *aCx, JSObject *aObject, const nsIID &aIID, void **aResult)
 
 
 PyObject *
-GetGlobalJSObject(void)
+GetJSGlobalObject(void)
 {
     AutoJSContext aCx;
     AutoReporter ar(aCx);
 
-    JS::RootedObject aGlobal(aCx, pyRuntime::GetGlobalJSObject(aCx));
+    JS::RootedObject aGlobal(aCx, pyRuntime::GetJSGlobalObject(aCx));
     if (aGlobal) {
         //EnableUniversalXPConnect??
         return pyjs::WrapObject(aCx, &aGlobal);

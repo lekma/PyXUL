@@ -59,7 +59,7 @@ namespace pyxul {
             );
 
 
-            static JSObject *GetGlobalJSObject(JSContext *aCx);
+            static JSObject *GetJSGlobalObject(JSContext *aCx);
 
             static already_AddRefed<pyRuntime> GetRuntime();
 
