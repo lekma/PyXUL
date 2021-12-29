@@ -1,0 +1,74 @@
+diff -urN UXP-RELBASE_20210823/dom/canvas/WebGLShaderValidator.cpp xulrunner-source/dom/canvas/WebGLShaderValidator.cpp
+--- UXP-RELBASE_20210823/dom/canvas/WebGLShaderValidator.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/dom/canvas/WebGLShaderValidator.cpp	2021-12-26 13:22:44.442429299 +0100
+@@ -9,6 +9,7 @@
+ #include "angle/ShaderLang.h"
+ #include "gfxPrefs.h"
+ #include "GLContext.h"
++#include "mozilla/gfx/Logging.h"
+ #include "mozilla/Preferences.h"
+ #include "MurmurHash3.h"
+ #include "nsPrintfCString.h"
+@@ -47,7 +48,7 @@
+     // ESSL 3 requires constant-integral-expressions for this as well.
+     // Just do it universally.
+     options |= SH_UNROLL_FOR_LOOP_WITH_SAMPLER_ARRAY_INDEX;
+-    
++
+     // Needed for driver bug detection
+     options |= SH_EMULATE_BUILT_IN_FUNCTIONS;
+ 
+@@ -109,9 +110,13 @@
+         case 420: return SH_GLSL_420_CORE_OUTPUT;
+         case 430: return SH_GLSL_430_CORE_OUTPUT;
+         case 440: return SH_GLSL_440_CORE_OUTPUT;
+-        case 450: return SH_GLSL_450_CORE_OUTPUT;
+         default:
+-            MOZ_ASSERT(false, "GFX: Unexpected GLSL version.");
++            if (version >= 450) {
++                // "OpenGL 4.6 is also guaranteed to support all previous versions of the
++                //  OpenGL Shading Language back to version 1.10."
++                return SH_GLSL_450_CORE_OUTPUT;
++            }
++            gfxCriticalNote << "Unexpected GLSL version: " << version;
+         }
+     }
+ 
+diff -urN UXP-RELBASE_20210823/toolkit/xre/nsAppRunner.cpp xulrunner-source/toolkit/xre/nsAppRunner.cpp
+--- UXP-RELBASE_20210823/toolkit/xre/nsAppRunner.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/xre/nsAppRunner.cpp	2021-12-26 13:19:59.909114375 +0100
+@@ -3944,9 +3944,11 @@
+       SaveWordToEnvIfUnset("XRE_PROFILE_NAME", mProfileName);
+     }
+ 
++/* see: https://bugzilla.mozilla.org/show_bug.cgi?id=1626536
+ #ifdef MOZ_WIDGET_GTK
+     MOZ_gdk_display_close(mGdkDisplay);
+ #endif
++*/
+ 
+     {
+       rv = LaunchChild(mNativeApp, true);
+@@ -3955,11 +3957,13 @@
+     return rv == NS_ERROR_LAUNCHED_CHILD_PROCESS ? 0 : 1;
+   }
+ 
++/* see: https://bugzilla.mozilla.org/show_bug.cgi?id=1626536
+ #ifdef MOZ_WIDGET_GTK
+   // gdk_display_close also calls gdk_display_manager_set_default_display
+   // appropriately when necessary.
+   MOZ_gdk_display_close(mGdkDisplay);
+ #endif
++*/
+ 
+   XRE_DeinitCommandLine();
+ 
+@@ -4025,7 +4029,7 @@
+     const char *path = nullptr;
+     ArgResult ar = CheckArg("greomni", true, &path);
+     if (ar == ARG_BAD) {
+-      PR_fprintf(PR_STDERR, 
++      PR_fprintf(PR_STDERR,
+                  "Error: argument --greomni requires a path argument or the "
+                  "--osint argument was specified with the --greomni argument "
+                  "which is invalid.\n");

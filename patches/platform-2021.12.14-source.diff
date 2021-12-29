@@ -1,0 +1,586 @@
+diff -urN old/docshell/base/nsDocShell.cpp new/docshell/base/nsDocShell.cpp
+--- old/docshell/base/nsDocShell.cpp	2021-11-12 23:10:07.000000000 +0100
++++ new/docshell/base/nsDocShell.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -822,6 +822,8 @@
+   , mTouchEventsOverride(nsIDocShell::TOUCHEVENTS_OVERRIDE_NONE)
+   , mStateFloodGuardCount(0)
+   , mStateFloodGuardReported(false)
++  , mReloadFloodGuardCount(0)
++  , mReloadFloodGuardReported(false)
+ {
+   AssertOriginAttributesMatchPrivateBrowsing();
+   mHistoryID = ++gDocshellIDCounter;
+@@ -5329,6 +5331,25 @@
+                       nullptr);
+ }
+ 
++bool
++nsDocShell::IsReloadFlooding()
++{
++  if (mReloadFloodGuardCount > kReloadLimit) {
++    TimeStamp now = TimeStamp::Now();
++
++    if (now - mReloadFloodGuardUpdated > TimeDuration::FromSeconds(kReloadTimeSecs)) {
++      mReloadFloodGuardCount = 0;
++      mReloadFloodGuardUpdated = now;
++      mReloadFloodGuardReported = false;
++      return false;
++    }
++    return true;
++  }
++
++  mReloadFloodGuardCount++;
++  return false;
++}
++
+ NS_IMETHODIMP
+ nsDocShell::Reload(uint32_t aReloadFlags)
+ {
+@@ -5354,6 +5375,24 @@
+     shistInt->NotifyOnHistoryReload(mCurrentURI, aReloadFlags, &canReload);
+   }
+ 
++  // If we're being flooded with reload requests, we should abort early
++  // from the reload logic.
++  if (IsReloadFlooding()) {
++    // Report a warning to the console to tell developers why their reload
++    // failed.
++    // Do this only if not yet marked reported so we only report it once per
++    // flood interval.
++    if (!mReloadFloodGuardReported) {
++      nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
++                                      NS_LITERAL_CSTRING("Reload"),
++                                      GetDocument(),
++                                      nsContentUtils::eDOM_PROPERTIES,
++                                      "ReloadFloodingPrevented");
++      mReloadFloodGuardReported = true;
++    }
++    return NS_OK;
++  }
++
+   if (!canReload) {
+     return NS_OK;
+   }
+@@ -9353,7 +9392,11 @@
+   mContentViewer->SetNavigationTiming(mTiming);
+ 
+   if (NS_FAILED(mContentViewer->Init(widget, bounds))) {
++    nsCOMPtr<nsIContentViewer> viewer = mContentViewer;
++    viewer->Close(nullptr);
++    viewer->Destroy();
+     mContentViewer = nullptr;
++    mCurrentURI = nullptr;
+     NS_WARNING("ContentViewer Initialization failed");
+     return NS_ERROR_FAILURE;
+   }
+diff -urN old/docshell/base/nsDocShell.h new/docshell/base/nsDocShell.h
+--- old/docshell/base/nsDocShell.h	2021-11-12 23:10:07.000000000 +0100
++++ new/docshell/base/nsDocShell.h	2021-12-14 01:01:57.000000000 +0100
+@@ -1058,6 +1058,15 @@
+   const int32_t kStateUpdateLimit = 50;
+   const double kRefreshTimeSecs = 10.0;
+ 
++  // Keep track how how many history state changes we're getting, to catch &
++  // prevent flooding.
++  int32_t mReloadFloodGuardCount;
++  mozilla::TimeStamp mReloadFloodGuardUpdated;
++  bool mReloadFloodGuardReported;
++  // We have a limit of reloading 50 times every 10 seconds.
++  const int32_t kReloadLimit = 50;
++  const double kReloadTimeSecs = 10.0;
++
+   // Separate function to do the actual name (i.e. not _top, _self etc.)
+   // searching for FindItemWithName.
+   nsresult DoFindItemWithName(const nsAString& aName,
+@@ -1077,6 +1086,9 @@
+   // ReplaceState.
+   bool IsStateChangeFlooding();
+ 
++  // Helper method for Reload which checks for excessive calls to Reload.
++  bool IsReloadFlooding();
++
+ #ifdef DEBUG
+   // We're counting the number of |nsDocShells| to help find leaks
+   static unsigned long gNumberOfDocShells;
+diff -urN old/dom/base/nsStructuredCloneContainer.cpp new/dom/base/nsStructuredCloneContainer.cpp
+--- old/dom/base/nsStructuredCloneContainer.cpp	2021-11-12 23:10:08.000000000 +0100
++++ new/dom/base/nsStructuredCloneContainer.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -15,6 +15,7 @@
+ #include "xpcpublic.h"
+ 
+ #include "mozilla/Base64.h"
++#include "mozilla/CheckedInt.h"
+ #include "mozilla/dom/ScriptSettings.h"
+ 
+ using namespace mozilla;
+@@ -138,6 +139,11 @@
+ 
+   auto iter = Data().Start();
+   size_t size = Data().Size();
++  CheckedInt<nsAutoCString::size_type> sizeCheck(size);
++  if (!sizeCheck.isValid()) {
++    return NS_ERROR_FAILURE;
++  }
++
+   nsAutoCString binaryData;
+   binaryData.SetLength(size);
+   Data().ReadBytes(iter, binaryData.BeginWriting(), size);
+diff -urN old/dom/base/nsTextFragment.cpp new/dom/base/nsTextFragment.cpp
+--- old/dom/base/nsTextFragment.cpp	2021-11-12 23:10:08.000000000 +0100
++++ new/dom/base/nsTextFragment.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -197,6 +197,11 @@
+ bool
+ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi)
+ {
++  if (MOZ_UNLIKELY(aLength < 0 || static_cast<uint32_t>(aLength) >
++                                      NS_MAX_TEXT_FRAGMENT_LENGTH)) {
++    return false;
++  }
++
+   ReleaseText();
+ 
+   if (aLength == 0) {
+@@ -328,26 +333,30 @@
+   // This is a common case because some callsites create a textnode
+   // with a value by creating the node and then calling AppendData.
+   if (mState.mLength == 0) {
++    if (MOZ_UNLIKELY(aLength > INT32_MAX)) {
++      return false;
++    }
+     return SetTo(aBuffer, aLength, aUpdateBidi);
+   }
+ 
+   // Should we optimize for aData.Length() == 0?
+ 
+-  CheckedUint32 length = mState.mLength;
+-  length += aLength;
+-
+-  if (!length.isValid()) {
+-    return false;
++  // Note: Using CheckedInt here is wrong as nsTextFragment is 29 bits and needs an
++  // explicit check for that length and not INT_MAX. Also, this method can be a very
++  // hot path and cause performance loss since CheckedInt isn't inlined.
++  if (NS_MAX_TEXT_FRAGMENT_LENGTH - mState.mLength < aLength) {
++    return false;  // Would be overflowing if we'd continue.
+   }
+ 
+   if (mState.mIs2b) {
+-    length *= sizeof(char16_t);
+-    if (!length.isValid()) {
+-      return false;
++    size_t size = mState.mLength + aLength;
++    if (SIZE_MAX / sizeof(char16_t) < size) {
++      return false;  // Would be overflowing if we'd continue.
+     }
++    size *= sizeof(char16_t);
+ 
+     // Already a 2-byte string so the result will be too
+-    char16_t* buff = static_cast<char16_t*>(realloc(m2b, length.value()));
++    char16_t* buff = static_cast<char16_t*>(realloc(m2b, size));
+     if (!buff) {
+       return false;
+     }
+@@ -367,14 +376,15 @@
+   int32_t first16bit = FirstNon8Bit(aBuffer, aBuffer + aLength);
+ 
+   if (first16bit != -1) { // aBuffer contains no non-8bit character
+-    length *= sizeof(char16_t);
+-    if (!length.isValid()) {
+-      return false;
++    size_t size = mState.mLength + aLength;
++    if (SIZE_MAX / sizeof(char16_t) < size) {
++      return false;  // Would be overflowing if we'd continue.
+     }
++    size *= sizeof(char16_t);
+ 
+     // The old data was 1-byte, but the new is not so we have to expand it
+     // all to 2-byte
+-    char16_t* buff = static_cast<char16_t*>(malloc(length.value()));
++    char16_t* buff = static_cast<char16_t*>(malloc(size));
+     if (!buff) {
+       return false;
+     }
+@@ -402,15 +412,22 @@
+   }
+ 
+   // The new and the old data is all 1-byte
++
++  // Note: Using CheckedInt here is wrong. See above.
++  if (NS_MAX_TEXT_FRAGMENT_LENGTH - mState.mLength < aLength) {
++    return false;  // Would be overflowing if we'd continue.
++  }
++  
++  size_t size = mState.mLength + aLength;
++  MOZ_ASSERT(sizeof(char) == 1);
+   char* buff;
+   if (mState.mInHeap) {
+-    buff = static_cast<char*>(realloc(const_cast<char*>(m1b), length.value()));
++    buff = static_cast<char*>(realloc(const_cast<char*>(m1b), size));
+     if (!buff) {
+       return false;
+     }
+-  }
+-  else {
+-    buff = static_cast<char*>(malloc(length.value()));
++  } else {
++    buff = static_cast<char*>(malloc(size));
+     if (!buff) {
+       return false;
+     }
+diff -urN old/dom/base/nsTextFragment.h new/dom/base/nsTextFragment.h
+--- old/dom/base/nsTextFragment.h	2021-11-12 23:10:08.000000000 +0100
++++ new/dom/base/nsTextFragment.h	2021-12-14 01:01:57.000000000 +0100
+@@ -21,6 +21,8 @@
+ 
+ class nsString;
+ 
++#define NS_MAX_TEXT_FRAGMENT_LENGTH (static_cast<uint32_t>(0x1FFFFFFF))
++
+ // XXX should this normalize the code to keep a \u0000 at the end?
+ 
+ // XXX nsTextFragmentPool?
+@@ -203,6 +205,8 @@
+     return mState.mIs2b ? m2b[aIndex] : static_cast<unsigned char>(m1b[aIndex]);
+   }
+ 
++  // Packed 32-bit data structure:
++  // [InHeap(1)][Is2b(1)][IsBidi(1)][Data(29)]
+   struct FragmentBits {
+     // uint32_t to ensure that the values are unsigned, because we
+     // want 0/1, not 0/-1!
+@@ -212,6 +216,8 @@
+     uint32_t mInHeap : 1;
+     uint32_t mIs2b : 1;
+     uint32_t mIsBidi : 1;
++    // Note: If you change the number of bits of mLength, you also need to
++    // change NS_MAX_TEXT_FRAGMENT_LENGTH (see top of file).
+     uint32_t mLength : 29;
+   };
+ 
+diff -urN old/dom/locales/en-US/chrome/dom/dom.properties new/dom/locales/en-US/chrome/dom/dom.properties
+--- old/dom/locales/en-US/chrome/dom/dom.properties	2021-11-12 23:10:11.000000000 +0100
++++ new/dom/locales/en-US/chrome/dom/dom.properties	2021-12-14 01:01:57.000000000 +0100
+@@ -318,3 +318,5 @@
+ LargeAllocationNonE10S=A Large-Allocation header was ignored due to the document not being loaded out of process.
+ # LOCALIZATION NOTE: Do not translate "pushState" and "replaceState"
+ PushStateFloodingPrevented=Call to pushState or replaceState ignored due to excessive calls within a short timeframe.
++# LOCALIZATION NOTE: Do not translate "Reload"
++ReloadFloodingPrevented=Call to Reload ignored due to excessive calls within a short timeframe.
+diff -urN old/dom/xhr/XMLHttpRequestMainThread.cpp new/dom/xhr/XMLHttpRequestMainThread.cpp
+--- old/dom/xhr/XMLHttpRequestMainThread.cpp	2021-11-12 23:10:15.000000000 +0100
++++ new/dom/xhr/XMLHttpRequestMainThread.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -86,6 +86,7 @@
+ #include "mozilla/Preferences.h"
+ #include "private/pprio.h"
+ #include "XMLHttpRequestUpload.h"
++#include "nsHostObjectProtocolHandler.h"
+ 
+ using namespace mozilla::net;
+ 
+@@ -2880,6 +2881,11 @@
+     return NS_ERROR_DOM_NETWORK_ERR;
+   }
+ 
++  // non-GET requests aren't allowed for blob.
++  if (IsBlobURI(mRequestURL) && !mRequestMethod.EqualsLiteral("GET")) {
++    return NS_ERROR_DOM_NETWORK_ERR;
++  }
++
+   PopulateNetworkInterfaceId();
+ 
+   // XXX We should probably send a warning to the JS console
+diff -urN old/layout/base/nsDocumentViewer.cpp new/layout/base/nsDocumentViewer.cpp
+--- old/layout/base/nsDocumentViewer.cpp	2021-11-12 23:10:26.000000000 +0100
++++ new/layout/base/nsDocumentViewer.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -1602,8 +1602,6 @@
+ NS_IMETHODIMP
+ nsDocumentViewer::Destroy()
+ {
+-  NS_ASSERTION(mDocument, "No document in Destroy()!");
+-
+ #ifdef NS_PRINTING
+   // Here is where we check to see if the document was still being prepared 
+   // for printing when it was asked to be destroy from someone externally
+diff -urN old/netwerk/base/nsINetUtil.idl new/netwerk/base/nsINetUtil.idl
+--- old/netwerk/base/nsINetUtil.idl	2021-11-12 23:10:38.000000000 +0100
++++ new/netwerk/base/nsINetUtil.idl	2021-12-14 01:01:57.000000000 +0100
+@@ -167,6 +167,9 @@
+   /** Skip C0 and DEL from unescaping */
+   const unsigned long ESCAPE_URL_SKIP_CONTROL = 1 << 15;
+ 
++  /** %XX-escape external protocol handler URL */
++  const unsigned long ESCAPE_URL_EXT_HANDLER = 1 << 17;
++
+   /**
+    * %XX-Escape invalid chars in a URL segment. 
+    *
+diff -urN old/uriloader/exthandler/nsExternalHelperAppService.cpp new/uriloader/exthandler/nsExternalHelperAppService.cpp
+--- old/uriloader/exthandler/nsExternalHelperAppService.cpp	2021-11-12 23:10:49.000000000 +0100
++++ new/uriloader/exthandler/nsExternalHelperAppService.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -1,5 +1,4 @@
+ /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+- * vim:expandtab:shiftwidth=2:tabstop=2:cin:
+  * This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+@@ -851,6 +850,25 @@
+ static const char kExternalProtocolPrefPrefix[]  = "network.protocol-handler.external.";
+ static const char kExternalProtocolDefaultPref[] = "network.protocol-handler.external-default";
+ 
++// static
++nsresult nsExternalHelperAppService::EscapeURI(nsIURI* aURI, nsIURI** aResult) {
++  MOZ_ASSERT(aURI);
++  MOZ_ASSERT(aResult);
++
++  nsAutoCString spec;
++  aURI->GetSpec(spec);
++
++  if (spec.Find("%00") != -1) return NS_ERROR_MALFORMED_URI;
++
++  nsAutoCString escapedSpec;
++  nsresult rv = NS_EscapeURL(spec, esc_AlwaysCopy | esc_ExtHandler, escapedSpec,
++                             fallible);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr<nsIIOService> ios(do_GetIOService());
++  return ios->NewURI(escapedSpec, nullptr, nullptr, aResult);
++}
++
+ NS_IMETHODIMP 
+ nsExternalHelperAppService::LoadURI(nsIURI *aURI,
+                                     nsIInterfaceRequestor *aWindowContext)
+@@ -867,22 +885,12 @@
+     return NS_OK;
+   }
+ 
+-  nsAutoCString spec;
+-  aURI->GetSpec(spec);
+-
+-  if (spec.Find("%00") != -1)
+-    return NS_ERROR_MALFORMED_URI;
+-
+-  spec.ReplaceSubstring("\"", "%22");
+-  spec.ReplaceSubstring("`", "%60");
+-  
+-  nsCOMPtr<nsIIOService> ios(do_GetIOService());
+-  nsCOMPtr<nsIURI> uri;
+-  nsresult rv = ios->NewURI(spec, nullptr, nullptr, getter_AddRefs(uri));
++  nsCOMPtr<nsIURI> escapedURI;
++  nsresult rv = EscapeURI(aURI, getter_AddRefs(escapedURI));
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   nsAutoCString scheme;
+-  uri->GetScheme(scheme);
++  escapedURI->GetScheme(scheme);
+   if (scheme.IsEmpty())
+     return NS_OK; // must have a scheme
+ 
+@@ -915,13 +923,13 @@
+   // a helper app or the system default, we just launch the URI.
+   if (!alwaysAsk && (preferredAction == nsIHandlerInfo::useHelperApp ||
+                      preferredAction == nsIHandlerInfo::useSystemDefault))
+-    return handler->LaunchWithURI(uri, aWindowContext);
++    return handler->LaunchWithURI(escapedURI, aWindowContext);
+   
+   nsCOMPtr<nsIContentDispatchChooser> chooser =
+     do_CreateInstance("@mozilla.org/content-dispatch-chooser;1", &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+   
+-  return chooser->Ask(handler, aWindowContext, uri,
++  return chooser->Ask(handler, aWindowContext, escapedURI,
+                       nsIContentDispatchChooser::REASON_CANNOT_HANDLE);
+ }
+ 
+diff -urN old/uriloader/exthandler/nsExternalHelperAppService.h new/uriloader/exthandler/nsExternalHelperAppService.h
+--- old/uriloader/exthandler/nsExternalHelperAppService.h	2021-11-12 23:10:49.000000000 +0100
++++ new/uriloader/exthandler/nsExternalHelperAppService.h	2021-12-14 01:01:57.000000000 +0100
+@@ -198,6 +198,8 @@
+                                          bool aForceSave,
+                                          nsIInterfaceRequestor *aWindowContext,
+                                          nsIStreamListener ** aStreamListener);
++
++  static nsresult EscapeURI(nsIURI* aURI, nsIURI** aResult);
+ };
+ 
+ /**
+diff -urN old/xpcom/io/nsEscape.cpp new/xpcom/io/nsEscape.cpp
+--- old/xpcom/io/nsEscape.cpp	2021-11-12 23:10:50.000000000 +0100
++++ new/xpcom/io/nsEscape.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -329,39 +329,40 @@
+ // parts of an URL.  The bits are the "url components" in the enum EscapeMask,
+ // see nsEscape.h.
+ //
+-// esc_Scheme        =     1
+-// esc_Username      =     2
+-// esc_Password      =     4
+-// esc_Host          =     8
+-// esc_Directory     =    16
+-// esc_FileBaseName  =    32
+-// esc_FileExtension =    64
+-// esc_Param         =   128
+-// esc_Query         =   256
+-// esc_Ref           =   512
++// esc_Scheme        =      1
++// esc_Username      =      2
++// esc_Password      =      4
++// esc_Host          =      8
++// esc_Directory     =     16
++// esc_FileBaseName  =     32
++// esc_FileExtension =     64
++// esc_Param         =    128
++// esc_Query         =    256
++// esc_Ref           =    512
++// esc_ExtHandler    = 131072
+ 
+ static const uint32_t EscapeChars[256] =
+-//   0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
++//     0      1      2      3      4      5      6      7      8      9      A      B      C      D      E      F
+ {
+-     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  // 0x
+-     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  // 1x
+-     0,1023,   0, 512,1023,   0,1023, 624,1023,1023,1023,1023,1023,1023, 953, 784,  // 2x   !"#$%&'()*+,-./
+-  1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1008,1008,   0,1008,   0, 768,  // 3x  0123456789:;<=>?
+-  1008,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,  // 4x  @ABCDEFGHIJKLMNO
+-  1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1008, 896,1008, 896,1023,  // 5x  PQRSTUVWXYZ[\]^_
+-   384,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,  // 6x  `abcdefghijklmno
+-  1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023, 896,1012, 896,1023,   0,  // 7x  pqrstuvwxyz{|}~ DEL
+-     0                                                                              // 80 to FF are zero
++       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,  // 0x
++       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,  // 1x
++       0,132095,     0,131584,132095,     0,132095,131696,132095,132095,132095,132095,132095,132095,132025,131856,  // 2x   !"#$%&'()*+,-./
++  132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132080,132080,     0,132080,     0,131840,  // 3x  0123456789:;<=>?
++  132080,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,  // 4x  @ABCDEFGHIJKLMNO
++  132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132080,   896,132080,   896,132095,  // 5x  PQRSTUVWXYZ[\]^_
++     384,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,  // 6x  `abcdefghijklmno
++  132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,132095,   896,  1012,   896,132095,     0,  // 7x  pqrstuvwxyz{|}~ DEL
++       0                                                                                                            // 80 to FF are zero
+ };
+ 
+-static uint16_t dontNeedEscape(unsigned char aChar, uint32_t aFlags)
++static bool dontNeedEscape(unsigned char aChar, uint32_t aFlags)
+ {
+   return EscapeChars[(uint32_t)aChar] & aFlags;
+ }
+-static uint16_t dontNeedEscape(uint16_t aChar, uint32_t aFlags)
++static bool dontNeedEscape(uint16_t aChar, uint32_t aFlags)
+ {
+   return aChar < mozilla::ArrayLength(EscapeChars) ?
+-    (EscapeChars[(uint32_t)aChar]  & aFlags) : 0;
++    (EscapeChars[(uint32_t)aChar] & aFlags) : false;
+ }
+ 
+ //----------------------------------------------------------------------------------------
+diff -urN old/xpcom/io/nsEscape.h new/xpcom/io/nsEscape.h
+--- old/xpcom/io/nsEscape.h	2021-11-12 23:10:50.000000000 +0100
++++ new/xpcom/io/nsEscape.h	2021-12-14 01:01:57.000000000 +0100
+@@ -97,7 +97,11 @@
+                                     * ascii octets (<= 0x7F) to be skipped when unescaping */
+   esc_AlwaysCopy     = 1u << 13, /* copy input to result buf even if escaping is unnecessary */
+   esc_Colon          = 1u << 14, /* forces escape of colon */
+-  esc_SkipControl    = 1u << 15  /* skips C0 and DEL from unescaping */
++  esc_SkipControl    = 1u << 15, /* skips C0 and DEL from unescaping */
++  esc_Spaces         = 1u << 16, /* forces escape of spaces */
++  esc_ExtHandler     = 1u << 17  /* For escaping external protocol handler urls.
++                                  * Escapes everything except:
++                                  * a-z, 0-9 and !#$&'()*+,-./:;=?@[]_~ */
+ };
+ 
+ /**
+diff -urN old/xpcom/threads/nsThread.cpp new/xpcom/threads/nsThread.cpp
+--- old/xpcom/threads/nsThread.cpp	2021-11-12 23:10:50.000000000 +0100
++++ new/xpcom/threads/nsThread.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -1217,7 +1217,8 @@
+   }
+ 
+   MutexAutoLock lock(mLock);
+-  mObserver = aObs;
++  nsCOMPtr<nsIThreadObserver> observer = aObs;
++  mObserver.swap(observer);
+   return NS_OK;
+ }
+ 
+diff -urN old/xpcom/threads/nsTimerImpl.cpp new/xpcom/threads/nsTimerImpl.cpp
+--- old/xpcom/threads/nsTimerImpl.cpp	2021-11-12 23:10:50.000000000 +0100
++++ new/xpcom/threads/nsTimerImpl.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -433,11 +433,13 @@
+   uint8_t oldType;
+   uint32_t oldDelay;
+   TimeStamp oldTimeout;
++  nsCOMPtr<nsITimer> timer;
+ 
+   {
++    MutexAutoLock lock(mMutex);
++
+     // Don't fire callbacks or fiddle with refcounts when the mutex is locked.
+     // If some other thread Cancels/Inits after this, they're just too late.
+-    MutexAutoLock lock(mMutex);
+     if (aGeneration != mGeneration) {
+       return;
+     }
+@@ -446,6 +448,10 @@
+     oldType = mType;
+     oldDelay = mDelay;
+     oldTimeout = mTimeout;
++    // Ensure that the nsITimer does not unhook from the nsTimerImpl during
++    // Fire; this will cause null pointer crashes if the user of the timer drops
++    // its reference, and then uses the nsITimer* passed in the callback.
++    timer = mITimer;    
+   }
+ 
+   PROFILER_LABEL("Timer", "Fire",
+@@ -475,13 +481,13 @@
+ 
+   switch (mCallbackDuringFire.mType) {
+     case Callback::Type::Function:
+-      mCallbackDuringFire.mCallback.c(mITimer, mCallbackDuringFire.mClosure);
++      mCallbackDuringFire.mCallback.c(timer, mCallbackDuringFire.mClosure);
+       break;
+     case Callback::Type::Interface:
+-      mCallbackDuringFire.mCallback.i->Notify(mITimer);
++      mCallbackDuringFire.mCallback.i->Notify(timer);
+       break;
+     case Callback::Type::Observer:
+-      mCallbackDuringFire.mCallback.o->Observe(mITimer, NS_TIMER_CALLBACK_TOPIC,
++      mCallbackDuringFire.mCallback.o->Observe(timer, NS_TIMER_CALLBACK_TOPIC,
+                                                nullptr);
+       break;
+     default:
+diff -urN old/xpcom/threads/TimerThread.cpp new/xpcom/threads/TimerThread.cpp
+--- old/xpcom/threads/TimerThread.cpp	2021-11-12 23:10:50.000000000 +0100
++++ new/xpcom/threads/TimerThread.cpp	2021-12-14 01:01:57.000000000 +0100
+@@ -140,11 +140,7 @@
+ 
+   nsresult Cancel() override
+   {
+-    // Since nsTimerImpl is not thread-safe, we should release |mTimer|
+-    // here in the target thread to avoid race condition. Otherwise,
+-    // ~nsTimerEvent() which calls nsTimerImpl::Release() could run in the
+-    // timer thread and result in race condition.
+-    mTimer = nullptr;
++    mTimer->Cancel();
+     return NS_OK;
+   }
+ 
+@@ -269,11 +265,6 @@
+ NS_IMETHODIMP
+ nsTimerEvent::Run()
+ {
+-  if (!mTimer) {
+-    MOZ_ASSERT(false);
+-    return NS_OK;
+-  }
+-
+   if (MOZ_LOG_TEST(GetTimerLog(), LogLevel::Debug)) {
+     TimeStamp now = TimeStamp::Now();
+     MOZ_LOG(GetTimerLog(), LogLevel::Debug,
+@@ -283,9 +274,7 @@
+ 
+   mTimer->Fire(mGeneration);
+ 
+-  // We call Cancel() to correctly release mTimer.
+-  // Read more in the Cancel() implementation.
+-  return Cancel();
++  return NS_OK;
+ }
+ 
+ nsresult

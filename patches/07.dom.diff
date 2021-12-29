@@ -1,0 +1,56 @@
+diff -urN UXP-RELBASE_20210719/dom/bindings/Exceptions.cpp xulrunner-source/dom/bindings/Exceptions.cpp
+--- UXP-RELBASE_20210719/dom/bindings/Exceptions.cpp	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/dom/bindings/Exceptions.cpp	2021-07-23 16:07:41.276598441 +0200
+@@ -20,6 +20,7 @@
+ #include "XPCWrapper.h"
+ #include "WorkerPrivate.h"
+ #include "nsContentUtils.h"
++#include "xpcpublic.h"
+ 
+ namespace mozilla {
+ namespace dom {
+@@ -169,6 +170,18 @@
+   return false;
+ }
+ 
++bool
++Throw(JSContext* aCx, nsresult aRv)
++{
++  return Throw(aCx, aRv, EmptyCString());
++}
++
++bool
++ThrowResult(JSContext* aCx, nsresult aRv)
++{
++  return xpc::Throw(aCx, aRv);
++}
++
+ void
+ ThrowAndReport(nsPIDOMWindowInner* aWindow, nsresult aRv)
+ {
+diff -urN UXP-RELBASE_20210719/dom/bindings/Exceptions.h xulrunner-source/dom/bindings/Exceptions.h
+--- UXP-RELBASE_20210719/dom/bindings/Exceptions.h	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/dom/bindings/Exceptions.h	2021-07-23 16:07:41.280598389 +0200
+@@ -27,7 +27,13 @@
+ // If we're throwing a DOMException and message is empty, the default
+ // message for the nsresult in question will be used.
+ bool
+-Throw(JSContext* cx, nsresult rv, const nsACString& message = EmptyCString());
++Throw(JSContext* cx, nsresult rv, const nsACString& message);
++
++bool
++Throw(JSContext* cx, nsresult rv);
++
++bool
++ThrowResult(JSContext* cx, nsresult rv);
+ 
+ // Create, throw and report an exception to a given window.
+ void
+@@ -37,6 +43,7 @@
+ // aCx before they return.
+ void
+ ThrowExceptionObject(JSContext* aCx, Exception* aException);
++
+ void
+ ThrowExceptionObject(JSContext* aCx, nsIException* aException);
+ 

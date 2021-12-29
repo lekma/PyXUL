@@ -1,0 +1,311 @@
+diff -urN UXP-RELBASE_20210823/js/public/GCAPI.h xulrunner-source/js/public/GCAPI.h
+--- UXP-RELBASE_20210823/js/public/GCAPI.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/public/GCAPI.h	2021-12-28 14:19:10.375980994 +0100
+@@ -14,6 +14,7 @@
+ 
+ namespace js {
+ namespace gc {
++void FinishGC(JSContext* cx);
+ class GCRuntime;
+ } // namespace gc
+ namespace gcstats {
+diff -urN UXP-RELBASE_20210823/js/public/HeapAPI.h xulrunner-source/js/public/HeapAPI.h
+--- UXP-RELBASE_20210823/js/public/HeapAPI.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/public/HeapAPI.h	2021-12-28 14:19:10.375980994 +0100
+@@ -236,18 +236,6 @@
+     uintptr_t ptr;
+ };
+ 
+-inline bool
+-operator==(const GCCellPtr& ptr1, const GCCellPtr& ptr2)
+-{
+-    return ptr1.asCell() == ptr2.asCell();
+-}
+-
+-inline bool
+-operator!=(const GCCellPtr& ptr1, const GCCellPtr& ptr2)
+-{
+-    return !(ptr1 == ptr2);
+-}
+-
+ // Unwraps the given GCCellPtr and calls the given functor with a template
+ // argument of the actual type of the pointer.
+ template <typename F, typename... Args>
+@@ -268,6 +256,21 @@
+ 
+ } /* namespace JS */
+ 
++// These are defined in the toplevel namespace instead of within JS so that
++// they won't shadow other operator== overloads (see bug 1456512.)
++
++inline bool
++operator==(const JS::GCCellPtr& ptr1, const JS::GCCellPtr& ptr2)
++{
++    return ptr1.asCell() == ptr2.asCell();
++}
++
++inline bool
++operator!=(const JS::GCCellPtr& ptr1, const JS::GCCellPtr& ptr2)
++{
++    return !(ptr1 == ptr2);
++}
++
+ namespace js {
+ namespace gc {
+ namespace detail {
+diff -urN UXP-RELBASE_20210823/js/src/builtin/String.js xulrunner-source/js/src/builtin/String.js
+--- UXP-RELBASE_20210823/js/src/builtin/String.js	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/builtin/String.js	2021-12-28 14:19:10.375980994 +0100
+@@ -969,12 +969,14 @@
+         ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.trimStart');
+     return callFunction(std_String_trimStart, string);
+ }
++_SetCanonicalName(String_static_trimStart, "trimLeft");
+ 
+ function String_static_trimEnd(string) {
+     if (arguments.length < 1)
+         ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.trimEnd');
+     return callFunction(std_String_trimEnd, string);
+ }
++_SetCanonicalName(String_static_trimEnd, "trimRight");
+ 
+ function String_static_toLocaleLowerCase(string) {
+     if (arguments.length < 1)
+diff -urN UXP-RELBASE_20210823/js/src/gc/GCInternals.h xulrunner-source/js/src/gc/GCInternals.h
+--- UXP-RELBASE_20210823/js/src/gc/GCInternals.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/gc/GCInternals.h	2021-12-28 14:19:10.375980994 +0100
+@@ -18,8 +18,6 @@
+ namespace js {
+ namespace gc {
+ 
+-void FinishGC(JSContext* cx);
+-
+ /*
+  * This class should be used by any code that needs to exclusive access to the
+  * heap in order to trace through it...
+diff -urN UXP-RELBASE_20210823/js/src/jsapi.cpp xulrunner-source/js/src/jsapi.cpp
+--- UXP-RELBASE_20210823/js/src/jsapi.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/jsapi.cpp	2021-12-28 14:22:24.531070796 +0100
+@@ -397,7 +397,6 @@
+ {
+     AssertHeapIsIdle(cx);
+     CHECK_REQUEST(cx);
+-    assertSameCompartment(cx, value1, value2);
+     MOZ_ASSERT(equal);
+     return StrictlyEqual(cx, value1, value2, equal);
+ }
+@@ -407,7 +406,6 @@
+ {
+     AssertHeapIsIdle(cx);
+     CHECK_REQUEST(cx);
+-    assertSameCompartment(cx, value1, value2);
+     MOZ_ASSERT(equal);
+     return LooselyEqual(cx, value1, value2, equal);
+ }
+@@ -417,7 +415,6 @@
+ {
+     AssertHeapIsIdle(cx);
+     CHECK_REQUEST(cx);
+-    assertSameCompartment(cx, value1, value2);
+     MOZ_ASSERT(same);
+     return SameValue(cx, value1, value2, same);
+ }
+@@ -873,7 +870,7 @@
+     AutoDisableCompactingGC nocgc(cx);
+ 
+     AutoDisableProxyCheck adpc(cx->runtime());
+-    
++
+     // Transplanting is never OOM-safe.
+     AutoEnterOOMUnsafeRegion oomUnsafe;
+ 
+@@ -2812,6 +2809,12 @@
+ }
+ 
+ JS_PUBLIC_API(bool)
++JS::IsClassConstructor(JSObject* obj)
++{
++    return obj->isClassConstructor();
++}
++
++JS_PUBLIC_API(bool)
+ JS_CallFunctionValue(JSContext* cx, HandleObject obj, HandleValue fval, const HandleValueArray& args,
+                      MutableHandleValue rval)
+ {
+@@ -3702,6 +3705,12 @@
+     return fun->isConstructor();
+ }
+ 
++extern JS_PUBLIC_API(bool)
++JS_IsClassConstructor(JSFunction* fun)
++{
++    return fun->isClassConstructor();
++}
++
+ JS_PUBLIC_API(bool)
+ JS_DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs)
+ {
+diff -urN UXP-RELBASE_20210823/js/src/jsapi.h xulrunner-source/js/src/jsapi.h
+--- UXP-RELBASE_20210823/js/src/jsapi.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/jsapi.h	2021-12-28 14:19:10.379981057 +0100
+@@ -3297,6 +3297,9 @@
+ extern JS_PUBLIC_API(bool)
+ IsConstructor(JSObject* obj);
+ 
++extern JS_PUBLIC_API(bool)
++IsClassConstructor(JSObject* obj);
++
+ } /* namespace JS */
+ 
+ /**
+@@ -3638,6 +3641,9 @@
+ JS_IsConstructor(JSFunction* fun);
+ 
+ extern JS_PUBLIC_API(bool)
++JS_IsClassConstructor(JSFunction* fun);
++
++extern JS_PUBLIC_API(bool)
+ JS_DefineFunctions(JSContext* cx, JS::Handle<JSObject*> obj, const JSFunctionSpec* fs);
+ 
+ extern JS_PUBLIC_API(JSFunction*)
+diff -urN UXP-RELBASE_20210823/js/src/jsexn.cpp xulrunner-source/js/src/jsexn.cpp
+--- UXP-RELBASE_20210823/js/src/jsexn.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/jsexn.cpp	2021-12-28 14:19:10.379981057 +0100
+@@ -205,11 +205,11 @@
+ ExtraMallocSize(JSErrorReport* report)
+ {
+     if (report->linebuf())
+-	/*
+-	 * Mozilla bug 1352449. Count with null
+-	 * terminator and alignment. See CopyExtraData for
+-	 * the details about alignment.
+-	 */    
++       /*
++        * Mozilla bug 1352449. Count with null
++        * terminator and alignment. See CopyExtraData for
++        * the details about alignment.
++        */
+         return (report->linebufLength() + 1) * sizeof(char16_t) + 1;
+ 
+     return 0;
+@@ -225,15 +225,15 @@
+ CopyExtraData(JSContext* cx, uint8_t** cursor, JSErrorReport* copy, JSErrorReport* report)
+ {
+     if (report->linebuf()) {
+-	/*
+-	 * Make sure cursor is properly aligned for char16_t for platforms
+-	 * which need it and it's at the end of the buffer on exit.
+-	 */
+-	size_t alignment_backlog = 0;
++       /*
++        * Make sure cursor is properly aligned for char16_t for platforms
++        * which need it and it's at the end of the buffer on exit.
++        */
++        size_t alignment_backlog = 0;
+         if (size_t(*cursor) % 2)
+-	    (*cursor)++;
++            (*cursor)++;
+         else
+-	    alignment_backlog = 1;	
++            alignment_backlog = 1;
+ 
+         size_t linebufSize = (report->linebufLength() + 1) * sizeof(char16_t);
+         const char16_t* linebufCopy = (const char16_t*)(*cursor);
+@@ -854,20 +854,22 @@
+         // It would be nice to use ErrorReportToString here, but we can't quite
+         // do it - mostly because we'd need to figure out what JSExnType |name|
+         // corresponds to, which may not be any JSExnType at all.
+-        if (name && msg) {
+-            RootedString colon(cx, JS_NewStringCopyZ(cx, ": "));
+-            if (!colon)
+-                return false;
+-            RootedString nameColon(cx, ConcatStrings<CanGC>(cx, name, colon));
+-            if (!nameColon)
+-                return false;
+-            str = ConcatStrings<CanGC>(cx, nameColon, msg);
+-            if (!str)
+-                return false;
+-        } else if (name) {
+-            str = name;
+-        } else if (msg) {
+-            str = msg;
++        if (!str) {
++            if (name && msg) {
++                RootedString colon(cx, JS_NewStringCopyZ(cx, ": "));
++                if (!colon)
++                    return false;
++                RootedString nameColon(cx, ConcatStrings<CanGC>(cx, name, colon));
++                if (!nameColon)
++                    return false;
++                str = ConcatStrings<CanGC>(cx, nameColon, msg);
++                if (!str)
++                    return false;
++            } else if (name) {
++                str = name;
++            } else if (msg) {
++                str = msg;
++            }
+         }
+ 
+         if (JS_GetProperty(cx, exnObject, filename_str, &val)) {
+diff -urN UXP-RELBASE_20210823/js/src/jsobj.cpp xulrunner-source/js/src/jsobj.cpp
+--- UXP-RELBASE_20210823/js/src/jsobj.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/jsobj.cpp	2021-12-28 14:19:10.379981057 +0100
+@@ -2082,6 +2082,16 @@
+     return constructHook() != nullptr;
+ }
+ 
++bool
++JSObject::isClassConstructor() const
++{
++    if (is<JSFunction>()) {
++        const JSFunction& fun = as<JSFunction>();
++        return fun.isClassConstructor();
++    }
++    return false;
++}
++
+ JSNative
+ JSObject::callHook() const
+ {
+diff -urN UXP-RELBASE_20210823/js/src/jsobj.h xulrunner-source/js/src/jsobj.h
+--- UXP-RELBASE_20210823/js/src/jsobj.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/src/jsobj.h	2021-12-28 14:19:10.379981057 +0100
+@@ -505,6 +505,7 @@
+      */
+     bool isCallable() const;
+     bool isConstructor() const;
++    bool isClassConstructor() const;
+     JSNative callHook() const;
+     JSNative constructHook() const;
+ 
+@@ -686,6 +687,12 @@
+     return v.isObject() && v.toObject().isConstructor();
+ }
+ 
++inline bool
++IsClassConstructor(const Value& v)
++{
++    return v.isObject() && v.toObject().isClassConstructor();
++}
++
+ } /* namespace js */
+ 
+ class JSValueArray {
+diff -urN UXP-RELBASE_20210823/js/xpconnect/wrappers/XrayWrapper.h xulrunner-source/js/xpconnect/wrappers/XrayWrapper.h
+--- UXP-RELBASE_20210823/js/xpconnect/wrappers/XrayWrapper.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/js/xpconnect/wrappers/XrayWrapper.h	2021-12-28 14:19:10.479982636 +0100
+@@ -63,7 +63,12 @@
+     constexpr XrayTraits() {}
+ 
+     static JSObject* getTargetObject(JSObject* wrapper) {
+-        return js::UncheckedUnwrap(wrapper, /* stopAtWindowProxy = */ false);
++        JSObject* target =
++            js::UncheckedUnwrap(wrapper, /* stopAtWindowProxy = */ false);
++        if (target) {
++            JS::ExposeObjectToActiveJS(target);
++        }
++        return target;
+     }
+ 
+     virtual bool resolveNativeProperty(JSContext* cx, JS::HandleObject wrapper,

@@ -1,0 +1,57 @@
+diff -urN UXP-RELBASE_20210719/xpcom/base/nsConsoleService.cpp xulrunner-source/xpcom/base/nsConsoleService.cpp
+--- UXP-RELBASE_20210719/xpcom/base/nsConsoleService.cpp	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/xpcom/base/nsConsoleService.cpp	2021-07-23 16:05:11.511397031 +0200
+@@ -128,7 +128,7 @@
+     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+     MOZ_ASSERT(obs);
+     obs->AddObserver(mConsole, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
+-    obs->AddObserver(mConsole, "inner-window-destroyed", false);
++    /*obs->AddObserver(mConsole, "inner-window-destroyed", false);*/
+ 
+     if (!sLoggingBuffered) {
+       mConsole->Reset();
+@@ -410,14 +410,14 @@
+     Reset();
+     // We could remove ourselves from the observer service, but it is about to
+     // drop all observers anyways, so why bother.
+-  } else if (!strcmp(aTopic, "inner-window-destroyed")) {
++  /*} else if (!strcmp(aTopic, "inner-window-destroyed")) {
+     nsCOMPtr<nsISupportsPRUint64> supportsInt = do_QueryInterface(aSubject);
+     MOZ_ASSERT(supportsInt);
+ 
+     uint64_t windowId;
+     MOZ_ALWAYS_SUCCEEDS(supportsInt->GetData(&windowId));
+ 
+-    ClearMessagesForWindowID(windowId);
++    ClearMessagesForWindowID(windowId);*/
+   } else {
+     MOZ_CRASH();
+   }
+diff -urN UXP-RELBASE_20210719/xpcom/base/nsIProgrammingLanguage.idl xulrunner-source/xpcom/base/nsIProgrammingLanguage.idl
+--- UXP-RELBASE_20210719/xpcom/base/nsIProgrammingLanguage.idl	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/xpcom/base/nsIProgrammingLanguage.idl	2021-07-23 16:05:11.511397031 +0200
+@@ -16,10 +16,11 @@
+  * nsIStackFrame::language.
+  */
+ 
+-[scriptable, uuid(02ad9f22-3c98-46f3-be4e-2f5c9299e29a)]
++[scriptable, uuid(d2667d19-50f9-417a-834d-0c7711b60bea)]
+ interface nsIProgrammingLanguage : nsISupports
+ {
+     const uint32_t UNKNOWN     = 0;
+     // 1 is unused.
+     const uint32_t JAVASCRIPT  = 2;
++    const uint32_t PYTHON      = 3;
+ };
+diff -urN UXP-RELBASE_20210719/xpcom/build/FileLocation.h xulrunner-source/xpcom/build/FileLocation.h
+--- UXP-RELBASE_20210719/xpcom/build/FileLocation.h	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/xpcom/build/FileLocation.h	2021-07-23 16:05:11.511397031 +0200
+@@ -6,7 +6,7 @@
+ #ifndef mozilla_FileLocation_h
+ #define mozilla_FileLocation_h
+ 
+-#include "nsString.h"
++#include "nsStringGlue.h"
+ #include "nsCOMPtr.h"
+ #include "nsAutoPtr.h"
+ #include "nsIFile.h"

@@ -1,0 +1,186 @@
+diff -urN UXP-RELBASE_20210719/build/gecko_templates.mozbuild xulrunner-source/build/gecko_templates.mozbuild
+--- UXP-RELBASE_20210719/build/gecko_templates.mozbuild	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/build/gecko_templates.mozbuild	2021-07-23 16:00:10.509571130 +0200
+@@ -56,9 +56,9 @@
+     if mozglue:
+         LDFLAGS += CONFIG['MOZ_GLUE_WRAP_LDFLAGS']
+         if mozglue == 'program':
+-            USE_LIBS += ['mozglue']
+             DEFINES['MOZ_HAS_MOZGLUE'] = True
+             if CONFIG['MOZ_GLUE_IN_PROGRAM']:
++                USE_LIBS += ['static:mozglue']
+                 if CONFIG['GNU_CC']:
+                     LDFLAGS += ['-rdynamic']
+                 if CONFIG['MOZ_MEMORY']:
+@@ -68,10 +68,11 @@
+                         # executed at executable load (it has the 'constructor'
+                         # flag).
+                         LDFLAGS += ['-u', 'jemalloc_FreeBSD_init']
++            else:
++                USE_LIBS += ['mozglue']
+         elif mozglue == 'library':
+             LIBRARY_DEFINES['MOZ_HAS_MOZGLUE'] = True
+-            if not CONFIG['MOZ_GLUE_IN_PROGRAM']:
+-                USE_LIBS += ['mozglue']
++            USE_LIBS += ['mozglue']
+         else:
+             error('`mozglue` must be "program" or "library"')
+ 
+@@ -80,6 +81,9 @@
+             'fallible',
+         ]
+ 
++    if CONFIG['GCC_USE_GNU_LD']:
++        LDFLAGS += ['-Wl,-Bsymbolic']
++
+ 
+ @template
+ def GeckoProgram(name, linkage='standalone', **kwargs):
+diff -urN UXP-RELBASE_20210719/build/unix/gnu-ld-scripts/components-version-script xulrunner-source/build/unix/gnu-ld-scripts/components-version-script
+--- UXP-RELBASE_20210719/build/unix/gnu-ld-scripts/components-version-script	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/build/unix/gnu-ld-scripts/components-version-script	2021-07-23 16:00:10.509571130 +0200
+@@ -1,7 +1,3 @@
+ EXPORTED {
+-   global:
+-		NSModule;
+-		NSGetModule;
+-		__RLD_MAP;
+-   local: *;
++   global: *;
+ };
+diff -urN UXP-RELBASE_20210719/config/gcc_hidden.h xulrunner-source/config/gcc_hidden.h
+--- UXP-RELBASE_20210719/config/gcc_hidden.h	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/config/gcc_hidden.h	2021-07-23 16:00:10.509571130 +0200
+@@ -3,4 +3,4 @@
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ /* Begin all files as hidden visibility */
+-#pragma GCC visibility push(hidden)
++#pragma GCC visibility push(default)
+diff -urN UXP-RELBASE_20210719/js/src/moz.build xulrunner-source/js/src/moz.build
+--- UXP-RELBASE_20210719/js/src/moz.build	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/js/src/moz.build	2021-07-23 16:00:10.509571130 +0200
+@@ -257,7 +257,7 @@
+ # JS shell would like to link to the static library.
+ 
+ if CONFIG['JS_SHARED_LIBRARY']:
+-    GeckoSharedLibrary('js', linkage=None)
++    GeckoSharedLibrary('js', linkage='standalone', mozglue=None)
+     SHARED_LIBRARY_NAME = CONFIG['JS_LIBRARY_NAME']
+     SDK_LIBRARY = True
+ else:
+@@ -274,6 +274,7 @@
+     # Linking 'icu' will pull in the stubdata library,
+     # which the shell doesn't want, so link the other bits.
+     USE_LIBS += [
++        'icudata',
+         'icui18n',
+         'icuuc',
+     ]
+diff -urN UXP-RELBASE_20210719/mozglue/build/moz.build xulrunner-source/mozglue/build/moz.build
+--- UXP-RELBASE_20210719/mozglue/build/moz.build	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/mozglue/build/moz.build	2021-07-23 16:00:10.509571130 +0200
+@@ -3,12 +3,10 @@
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
+-# Build mozglue as a shared lib on Windows, OSX.
+-# If this is ever changed, update MOZ_SHARED_MOZGLUE in browser/installer/Makefile.in
+-if CONFIG['OS_TARGET'] in ('WINNT', 'Darwin'):
+-    SharedLibrary('mozglue')
+-else:
+-    Library('mozglue')
++SharedLibrary('mozglue')
++if CONFIG['MOZ_GLUE_IN_PROGRAM']:
++    FORCE_STATIC_LIB = True
++    STATIC_LIBRARY_NAME = 'mozglue_s'
+ 
+ SDK_LIBRARY = True
+ 
+diff -urN UXP-RELBASE_20210719/security/nss/lib/ssl/sslnonce.c xulrunner-source/security/nss/lib/ssl/sslnonce.c
+--- UXP-RELBASE_20210719/security/nss/lib/ssl/sslnonce.c	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/security/nss/lib/ssl/sslnonce.c	2021-07-23 16:00:10.509571130 +0200
+@@ -88,13 +88,9 @@
+ SECStatus
+ ssl_FreeSessionCacheLocks()
+ {
+-    PORT_Assert(PR_TRUE == LocksInitializedEarly);
+-    if (!LocksInitializedEarly) {
+-        PORT_SetError(SEC_ERROR_NOT_INITIALIZED);
+-        return SECFailure;
++    if (LocksInitializedEarly) {
++        FreeSessionCacheLocks();
+     }
+-    FreeSessionCacheLocks();
+-    LocksInitializedEarly = PR_FALSE;
+     return SECSuccess;
+ }
+ 
+diff -urN UXP-RELBASE_20210719/xpcom/glue/nsISupportsImpl.h xulrunner-source/xpcom/glue/nsISupportsImpl.h
+--- UXP-RELBASE_20210719/xpcom/glue/nsISupportsImpl.h	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/xpcom/glue/nsISupportsImpl.h	2021-07-23 16:00:10.509571130 +0200
+@@ -796,27 +796,37 @@
+ 
+ #define NS_IMPL_QUERY_BODY(_interface)                                        \
+   if ( aIID.Equals(NS_GET_IID(_interface)) )                                  \
+-    foundInterface = static_cast<_interface*>(this);                          \
++    {                                                                         \
++      foundInterface = static_cast<_interface*>(this);                        \
++    }                                                                         \
+   else
+ 
+ #define NS_IMPL_QUERY_BODY_CONDITIONAL(_interface, condition)                 \
+   if ( (condition) && aIID.Equals(NS_GET_IID(_interface)))                    \
+-    foundInterface = static_cast<_interface*>(this);                          \
++    {                                                                         \
++      foundInterface = static_cast<_interface*>(this);                        \
++    }                                                                         \
+   else
+ 
+ #define NS_IMPL_QUERY_BODY_AMBIGUOUS(_interface, _implClass)                  \
+   if ( aIID.Equals(NS_GET_IID(_interface)) )                                  \
+-    foundInterface = static_cast<_interface*>(                                \
++    {                                                                         \
++      foundInterface = static_cast<_interface*>(                              \
+                                     static_cast<_implClass*>(this));          \
++    }                                                                         \
+   else
+ 
+ #define NS_IMPL_QUERY_BODY_AGGREGATED(_interface, _aggregate)                 \
+   if ( aIID.Equals(NS_GET_IID(_interface)) )                                  \
+-    foundInterface = static_cast<_interface*>(_aggregate);                    \
++    {                                                                         \
++      foundInterface = static_cast<_interface*>(_aggregate);                  \
++    }                                                                         \
+   else
+ 
+ #define NS_IMPL_QUERY_TAIL_GUTS                                               \
+-    foundInterface = 0;                                                       \
++    {                                                                         \
++      foundInterface = 0;                                                     \
++    }                                                                         \
+   nsresult status;                                                            \
+   if ( !foundInterface )                                                      \
+     {                                                                         \
+@@ -834,7 +844,9 @@
+ }
+ 
+ #define NS_IMPL_QUERY_TAIL_INHERITING(_baseclass)                             \
+-    foundInterface = 0;                                                       \
++    {                                                                         \
++      foundInterface = 0;                                                     \
++    }                                                                         \
+   nsresult status;                                                            \
+   if ( !foundInterface )                                                      \
+     status = _baseclass::QueryInterface(aIID, (void**)&foundInterface);       \
+@@ -848,7 +860,9 @@
+ }
+ 
+ #define NS_IMPL_QUERY_TAIL_USING_AGGREGATOR(_aggregator)                      \
+-    foundInterface = 0;                                                       \
++    {                                                                         \
++      foundInterface = 0;                                                     \
++    }                                                                         \
+   nsresult status;                                                            \
+   if ( !foundInterface ) {                                                    \
+     NS_ASSERTION(_aggregator, "null aggregator");                             \

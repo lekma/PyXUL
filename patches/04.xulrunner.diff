@@ -1,0 +1,96 @@
+diff -urN UXP-RELBASE_20210719/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
+--- UXP-RELBASE_20210719/toolkit/components/console/content/console.xul	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/toolkit/components/console/content/console.xul	2021-07-23 16:04:15.850320061 +0200
+@@ -4,9 +4,9 @@
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+-<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> 
+-<?xml-stylesheet href="chrome://global/skin/console/console.css" type="text/css"?> 
+-<?xml-stylesheet href="chrome://global/content/console.css" type="text/css"?> 
++<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
++<?xml-stylesheet href="chrome://global/skin/console/console.css" type="text/css"?>
++<?xml-stylesheet href="chrome://global/content/console.css" type="text/css"?>
+ <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+ 
+ <!DOCTYPE window [
+@@ -17,10 +17,10 @@
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         title="&errorConsole.title;"
+         windowtype="global:console"
+-        width="640" height="480"
++        width="1280" height="576"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode"
+-        onclose="return closeWindow(false);"> 
++        onclose="return closeWindow(false);">
+ 
+   <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
+   <script type="application/javascript" src="chrome://global/content/console.js"/>
+@@ -61,7 +61,7 @@
+   <toolbox id="console-toolbox">
+     <toolbar class="chromeclass-toolbar" id="ToolbarMode">
+       <hbox id="viewGroup">
+-        <toolbarbutton type="radio" group="mode" id="Console:modeAll" 
++        <toolbarbutton type="radio" group="mode" id="Console:modeAll"
+                        label="&all.label;" accesskey="&all.accesskey;"
+                        oncommand="changeMode('All');"/>
+         <toolbarbutton type="radio" group="mode" id="Console:modeErrors"
+diff -urN UXP-RELBASE_20210719/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
+--- UXP-RELBASE_20210719/toolkit/components/satchel/FormHistory.jsm	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2021-07-23 16:04:15.854320139 +0200
+@@ -633,7 +633,9 @@
+     switch (operation) {
+       case "remove":
+         log("Remove from form history  " + change);
+-        let delStmt = makeMoveToDeletedStatement(change.guid, now, change, bindingArrays);
++        let delStmt = makeMoveToDeletedStatement(
++            "guid" in change ? change.guid : "", now, change, bindingArrays
++        );
+         if (delStmt && stmts.indexOf(delStmt) == -1)
+           stmts.push(delStmt);
+         if ("timeDeleted" in change)
+diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
+--- UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewPartialSource.xul	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2021-07-23 16:04:15.854320139 +0200
+@@ -25,7 +25,7 @@
+         titlepreface=""
+         titlemenuseparator ="&mainWindow.titlemodifierseparator;"
+         windowtype="navigator:view-source"
+-        width="500" height="300"
++        width="1024" height="576"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode">
+ 
+diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
+--- UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewSource.xul	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2021-07-23 16:04:15.854320139 +0200
+@@ -26,7 +26,7 @@
+         titlepreface="&mainWindow.preface;"
+         titlemenuseparator ="&mainWindow.titlemodifierseparator;"
+         windowtype="navigator:view-source"
+-        width="640" height="480"
++        width="1280" height="768"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode">
+ 
+diff -urN UXP-RELBASE_20210719/xulrunner/app/xulrunner.js xulrunner-source/xulrunner/app/xulrunner.js
+--- UXP-RELBASE_20210719/xulrunner/app/xulrunner.js	2021-07-16 01:13:31.000000000 +0200
++++ xulrunner-source/xulrunner/app/xulrunner.js	2021-07-23 16:04:15.854320139 +0200
+@@ -20,3 +20,16 @@
+ pref("browser.preferences.instantApply", true);
+ #endif
+ pref("browser.preferences.animateFadeIn", false);
++pref("accessibility.typeaheadfind.flashBar", 0);
++pref("app.update.auto", false);
++pref("app.update.enabled", false);
++pref("datareporting.healthreport.service.enabled", false);
++pref("datareporting.healthreport.uploadEnabled", false);
++pref("datareporting.policy.dataSubmissionEnabled", false);
++pref("extensions.update.autoUpdateDefault", false);
++pref("extensions.update.enabled", false);
++pref("javascript.options.showInConsole", true);
++pref("javascript.options.strict", true);
++pref("network.disable.ipc.security", true);
++pref("toolkit.telemetry.enabled", false);
++pref("toolkit.telemetry.server", "");
