@@ -169,10 +169,7 @@ Object::__compare__(Object *self, PyObject *aOther, int op)
     }
     JS::RootedValue aSelfVal(aCx, JS::ObjectValue(*self->mJSObject));
     JS::RootedValue aOtherVal(aCx, JS::ObjectValue(*aOtherObj));
-    if (
-        !JS_WrapValue(aCx, &aOtherVal) ||
-        !JS_StrictlyEqual(aCx, aSelfVal, aOtherVal, &equals)
-    ) {
+    if (!JS_StrictlyEqual(aCx, aSelfVal, aOtherVal, &equals)) {
         return nullptr;
     }
     if (equals) {
@@ -2076,10 +2073,16 @@ Object::Callable::__call__(JSContext *aCx, Object *self, PyObject *aArgs)
     }
     JS::RootedValue aResult(aCx, JS::UndefinedValue());
     // JS_WrapObject wraps mThis into the context's compartment
+    /*JS::RootedObject aThis(aCx, xpc::Unwrap(self->mThis));
     if (
+        !JS_WrapObject(aCx, &aThis) ||
+        !JS::Call(aCx, aThis, aFunction, aJSArgs, &aResult)
+    ) {*/
+    /*if (
         !JS_WrapObject(aCx, &self->mThis) ||
         !JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)
-    ) {
+    ) {*/
+    if (!JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)) {
         return nullptr;
     }
     if (aResult.isUndefined()) {

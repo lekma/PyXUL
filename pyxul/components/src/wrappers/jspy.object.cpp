@@ -186,14 +186,14 @@ Object::Alloc(
     const JSClass *aJSClass = js::Jsvalify(&T::Class);
     JSObject *self = nullptr;
 
-    //if ((self = JS_NewObjectWithGivenProto(aCx, aJSClass, aProto))) {
-    if (aProto) {
+    /*if (aProto) {
         self = JS_NewObjectWithGivenProto(aCx, aJSClass, aProto);
     }
     else {
         self = JS_NewObject(aCx, aJSClass);
     }
-    if (self) {
+    if (self) {*/
+    if ((self = JS_NewObjectWithGivenProto(aCx, aJSClass, aProto))) {
         Py_INCREF(aPyObject);
         JS_SetPrivate(self, aPyObject);
         JS::ExposeObjectToActiveJS(self);
