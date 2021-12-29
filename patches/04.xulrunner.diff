@@ -1,6 +1,6 @@
-diff -urN UXP-RELBASE_20210719/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
---- UXP-RELBASE_20210719/toolkit/components/console/content/console.xul	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/toolkit/components/console/content/console.xul	2021-07-23 16:04:15.850320061 +0200
+diff -urN UXP-RELBASE_20210823/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
+--- UXP-RELBASE_20210823/toolkit/components/console/content/console.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/console/content/console.xul	2021-12-29 17:09:39.056341722 +0100
 @@ -4,9 +4,9 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
@@ -36,9 +36,9 @@ diff -urN UXP-RELBASE_20210719/toolkit/components/console/content/console.xul xu
                         label="&all.label;" accesskey="&all.accesskey;"
                         oncommand="changeMode('All');"/>
          <toolbarbutton type="radio" group="mode" id="Console:modeErrors"
-diff -urN UXP-RELBASE_20210719/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
---- UXP-RELBASE_20210719/toolkit/components/satchel/FormHistory.jsm	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2021-07-23 16:04:15.854320139 +0200
+diff -urN UXP-RELBASE_20210823/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
+--- UXP-RELBASE_20210823/toolkit/components/satchel/FormHistory.jsm	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2021-12-29 17:09:39.056341722 +0100
 @@ -633,7 +633,9 @@
      switch (operation) {
        case "remove":
@@ -50,9 +50,9 @@ diff -urN UXP-RELBASE_20210719/toolkit/components/satchel/FormHistory.jsm xulrun
          if (delStmt && stmts.indexOf(delStmt) == -1)
            stmts.push(delStmt);
          if ("timeDeleted" in change)
-diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
---- UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewPartialSource.xul	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2021-07-23 16:04:15.854320139 +0200
+diff -urN UXP-RELBASE_20210823/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
+--- UXP-RELBASE_20210823/toolkit/components/viewsource/content/viewPartialSource.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2021-12-29 17:09:39.056341722 +0100
 @@ -25,7 +25,7 @@
          titlepreface=""
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -62,9 +62,9 @@ diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewPartial
          screenX="10" screenY="10"
          persist="screenX screenY width height sizemode">
  
-diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
---- UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewSource.xul	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2021-07-23 16:04:15.854320139 +0200
+diff -urN UXP-RELBASE_20210823/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
+--- UXP-RELBASE_20210823/toolkit/components/viewsource/content/viewSource.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2021-12-29 17:09:39.056341722 +0100
 @@ -26,7 +26,7 @@
          titlepreface="&mainWindow.preface;"
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -74,9 +74,22 @@ diff -urN UXP-RELBASE_20210719/toolkit/components/viewsource/content/viewSource.
          screenX="10" screenY="10"
          persist="screenX screenY width height sizemode">
  
-diff -urN UXP-RELBASE_20210719/xulrunner/app/xulrunner.js xulrunner-source/xulrunner/app/xulrunner.js
---- UXP-RELBASE_20210719/xulrunner/app/xulrunner.js	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/xulrunner/app/xulrunner.js	2021-07-23 16:04:15.854320139 +0200
+diff -urN UXP-RELBASE_20210823/toolkit/themes/shared/non-mac.jar.inc.mn xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn
+--- UXP-RELBASE_20210823/toolkit/themes/shared/non-mac.jar.inc.mn	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn	2021-12-29 17:11:55.806854470 +0100
+@@ -55,6 +55,9 @@
+ 
+   skin/classic/global/checkbox/cbox-check.gif              (../../windows/global/checkbox/cbox-check.gif)
+   skin/classic/global/checkbox/cbox-check-dis.gif          (../../windows/global/checkbox/cbox-check-dis.gif)
++  skin/classic/global/console/console-error-caret.gif      (../../windows/global/console/console-error-caret.gif)
++  skin/classic/global/console/console-error-dash.gif       (../../windows/global/console/console-error-dash.gif)
++  skin/classic/global/console/itemSelected.png             (../../windows/global/console/itemSelected.png)
+ * skin/classic/global/dirListing/dirListing.css            (../../windows/global/dirListing/dirListing.css)
+   skin/classic/global/dirListing/folder.png                (../../windows/global/dirListing/folder.png)
+   skin/classic/global/dirListing/local.png                 (../../windows/global/dirListing/local.png)
+diff -urN UXP-RELBASE_20210823/xulrunner/app/xulrunner.js xulrunner-source/xulrunner/app/xulrunner.js
+--- UXP-RELBASE_20210823/xulrunner/app/xulrunner.js	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/xulrunner/app/xulrunner.js	2021-12-29 17:09:39.056341722 +0100
 @@ -20,3 +20,16 @@
  pref("browser.preferences.instantApply", true);
  #endif
