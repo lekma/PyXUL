@@ -2051,38 +2051,31 @@ PyTypeObject Object::Set::Type = {
    -------------------------------------------------------------------------- */
 
 PyObject *
-Object::Callable::__call__(JSContext *aCx, Object *self, PyObject *aArgs)
+Object::Callable::__construct__(
+    JSContext *aCx, JS::HandleValue aFunction, const JS::HandleValueArray &aArgs
+)
 {
-    JS::AutoValueVector aJSArgs(aCx);
-    if (!jspy::WrapArgs(aCx, aArgs, aJSArgs)) {
+    JS::RootedObject aResult(aCx);
+
+    if (!JS::Construct(aCx, aFunction, aArgs, &aResult)) {
         return nullptr;
     }
-    JS::RootedValue aFunction(aCx, JS::ObjectValue(*self->mJSObject));
-    if (
-        JS::IsConstructor(self->mJSObject) ||
-        JS::IsClassConstructor(self->mJSObject)
-    ) {
-        JS::RootedObject aResult(aCx);
-        if (!JS::Construct(aCx, aFunction, aJSArgs, &aResult)) {
-            return nullptr;
-        }
-        PY_ENSURE_TRUE(
-            aResult, nullptr, errors::JSError, "JS::Construct() returned null"
-        );
-        return WrapObject(aCx, &aResult);
-    }
+    PY_ENSURE_TRUE(
+        aResult, nullptr, errors::JSError, "JS::Construct() returned null"
+    );
+    return WrapObject(aCx, &aResult);
+}
+
+
+PyObject *
+Object::Callable::__call__(
+    JSContext *aCx, JS::HandleObject aThis, JS::HandleValue aFunction,
+    const JS::HandleValueArray &aArgs
+)
+{
     JS::RootedValue aResult(aCx, JS::UndefinedValue());
-    // JS_WrapObject wraps mThis into the context's compartment
-    /*JS::RootedObject aThis(aCx, xpc::Unwrap(self->mThis));
-    if (
-        !JS_WrapObject(aCx, &aThis) ||
-        !JS::Call(aCx, aThis, aFunction, aJSArgs, &aResult)
-    ) {*/
-    /*if (
-        !JS_WrapObject(aCx, &self->mThis) ||
-        !JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)
-    ) {*/
-    if (!JS::Call(aCx, self->mThis, aFunction, aJSArgs, &aResult)) {
+
+    if (!JS::Call(aCx, aThis, aFunction, aArgs, &aResult)) {
         return nullptr;
     }
     if (aResult.isUndefined()) {
@@ -2106,7 +2099,18 @@ Object::Callable::Call(Object *self, PyObject *aArgs, PyObject *aKwargs)
     JSContext *aCx = aes.cx();
     AutoReporter ar(aCx);
 
-    return __call__(aCx, self, aArgs);
+    JS::RootedValue aFunction(aCx, JS::ObjectValue(*self->mJSObject));
+    JS::AutoValueVector aJSArgs(aCx);
+    if (!jspy::WrapArgs(aCx, aArgs, aJSArgs)) {
+        return nullptr;
+    }
+    if (
+        (JS::IsConstructor(self->mJSObject) && self->mThis) ||
+        JS::IsClassConstructor(self->mJSObject)
+    ) {
+        return __construct__(aCx, aFunction, aJSArgs);
+    }
+    return __call__(aCx, self->mThis, aFunction, aJSArgs);
 }
 
 

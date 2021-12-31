@@ -340,8 +340,13 @@ namespace pyxul::wrappers {
                 static PyTypeObject Type;
 
             protected:
+                static PyObject *__construct__(
+                    JSContext *aCx, JS::HandleValue aFunction,
+                    const JS::HandleValueArray &aArgs
+                );
                 static PyObject *__call__(
-                    JSContext *aCx, Object *self, PyObject *aArgs
+                    JSContext *aCx, JS::HandleObject aThis,
+                    JS::HandleValue aFunction, const JS::HandleValueArray &aArgs
                 );
 
                 static PyObject *Call(
