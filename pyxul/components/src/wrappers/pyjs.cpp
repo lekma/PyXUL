@@ -39,13 +39,13 @@ WrapString(JSContext *aCx, const JS::HandleString &aJSString)
     if ((str = JS_EncodeStringToUTF8(aCx, aJSString))) {
         if ((size = strlen(str)) < PY_SSIZE_T_MAX) {
             aResult = PyUnicode_DecodeUTF8Stateful(str, size, nullptr, nullptr);
-            JS_free(aCx, str);
         }
         else {
             PyErr_SetString(
                 PyExc_OverflowError, "JS::String too long for Python"
             );
         }
+        JS_free(aCx, str);
     }
     return aResult;
 }
