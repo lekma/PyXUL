@@ -1,6 +1,6 @@
 diff -urN UXP-RELBASE_20210823/dom/canvas/WebGLShaderValidator.cpp xulrunner-source/dom/canvas/WebGLShaderValidator.cpp
 --- UXP-RELBASE_20210823/dom/canvas/WebGLShaderValidator.cpp	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/dom/canvas/WebGLShaderValidator.cpp	2021-12-26 13:22:44.442429299 +0100
++++ xulrunner-source/dom/canvas/WebGLShaderValidator.cpp	2022-01-05 20:22:33.184527006 +0100
 @@ -9,6 +9,7 @@
  #include "angle/ShaderLang.h"
  #include "gfxPrefs.h"
@@ -34,9 +34,34 @@ diff -urN UXP-RELBASE_20210823/dom/canvas/WebGLShaderValidator.cpp xulrunner-sou
          }
      }
  
+diff -urN UXP-RELBASE_20210823/layout/style/MediaQueryList.cpp xulrunner-source/layout/style/MediaQueryList.cpp
+--- UXP-RELBASE_20210823/layout/style/MediaQueryList.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/layout/style/MediaQueryList.cpp	2022-01-05 20:25:16.322535995 +0100
+@@ -71,8 +71,10 @@
+ MediaQueryList::Matches()
+ {
+   if (!mMatchesValid) {
++    /*
+     MOZ_ASSERT(!HasListeners(),
+                "when listeners present, must keep mMatches current");
++    */
+     RecomputeMatches();
+   }
+ 
+@@ -100,8 +102,10 @@
+                                  ErrorResult& aRv)
+ {
+   if (!mMatchesValid) {
++    /*
+     MOZ_ASSERT(!HasListeners(),
+                "when listeners present, must keep mMatches current");
++    */
+     RecomputeMatches();
+   }
+ 
 diff -urN UXP-RELBASE_20210823/toolkit/xre/nsAppRunner.cpp xulrunner-source/toolkit/xre/nsAppRunner.cpp
 --- UXP-RELBASE_20210823/toolkit/xre/nsAppRunner.cpp	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/xre/nsAppRunner.cpp	2021-12-26 13:19:59.909114375 +0100
++++ xulrunner-source/toolkit/xre/nsAppRunner.cpp	2022-01-05 20:22:33.184527006 +0100
 @@ -3944,9 +3944,11 @@
        SaveWordToEnvIfUnset("XRE_PROFILE_NAME", mProfileName);
      }
