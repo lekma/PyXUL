@@ -1,6 +1,25 @@
-diff -urN UXP-RELBASE_20210719/dom/bindings/Exceptions.cpp xulrunner-source/dom/bindings/Exceptions.cpp
---- UXP-RELBASE_20210719/dom/bindings/Exceptions.cpp	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/dom/bindings/Exceptions.cpp	2021-07-23 16:07:41.276598441 +0200
+diff -urN UXP-RELBASE_20210823/dom/base/nsINode.cpp xulrunner-source/dom/base/nsINode.cpp
+--- UXP-RELBASE_20210823/dom/base/nsINode.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/dom/base/nsINode.cpp	2022-01-05 13:30:38.881938283 +0100
+@@ -808,7 +808,6 @@
+ nsresult
+ nsINode::SetUserData(const nsAString &aKey, nsIVariant *aData, nsIVariant **aResult)
+ {
+-  OwnerDoc()->WarnOnceAbout(nsIDocument::eGetSetUserData);
+   *aResult = nullptr;
+ 
+   nsCOMPtr<nsIAtom> key = NS_Atomize(aKey);
+@@ -863,7 +862,6 @@
+ nsIVariant*
+ nsINode::GetUserData(const nsAString& aKey)
+ {
+-  OwnerDoc()->WarnOnceAbout(nsIDocument::eGetSetUserData);
+   nsCOMPtr<nsIAtom> key = NS_Atomize(aKey);
+   if (!key) {
+     return nullptr;
+diff -urN UXP-RELBASE_20210823/dom/bindings/Exceptions.cpp xulrunner-source/dom/bindings/Exceptions.cpp
+--- UXP-RELBASE_20210823/dom/bindings/Exceptions.cpp	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/dom/bindings/Exceptions.cpp	2022-01-05 13:27:47.945927373 +0100
 @@ -20,6 +20,7 @@
  #include "XPCWrapper.h"
  #include "WorkerPrivate.h"
@@ -28,9 +47,9 @@ diff -urN UXP-RELBASE_20210719/dom/bindings/Exceptions.cpp xulrunner-source/dom/
  void
  ThrowAndReport(nsPIDOMWindowInner* aWindow, nsresult aRv)
  {
-diff -urN UXP-RELBASE_20210719/dom/bindings/Exceptions.h xulrunner-source/dom/bindings/Exceptions.h
---- UXP-RELBASE_20210719/dom/bindings/Exceptions.h	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/dom/bindings/Exceptions.h	2021-07-23 16:07:41.280598389 +0200
+diff -urN UXP-RELBASE_20210823/dom/bindings/Exceptions.h xulrunner-source/dom/bindings/Exceptions.h
+--- UXP-RELBASE_20210823/dom/bindings/Exceptions.h	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/dom/bindings/Exceptions.h	2022-01-05 13:27:47.945927373 +0100
 @@ -27,7 +27,13 @@
  // If we're throwing a DOMException and message is empty, the default
  // message for the nsresult in question will be used.
