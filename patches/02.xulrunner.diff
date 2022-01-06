@@ -1,6 +1,6 @@
-diff -urN UXP-RELBASE_20210719/xulrunner/app/moz.build xulrunner-source/xulrunner/app/moz.build
---- UXP-RELBASE_20210719/xulrunner/app/moz.build	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/xulrunner/app/moz.build	2021-07-23 16:01:31.131132072 +0200
+diff -aurN platform/xulrunner/app/moz.build xulrunner-source/xulrunner/app/moz.build
+--- platform/xulrunner/app/moz.build	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/xulrunner/app/moz.build	2022-01-06 13:28:06.443958288 +0100
 @@ -3,7 +3,10 @@
  # License, v. 2.0. If a copy of the MPL was not distributed with this
  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,9 +13,29 @@ diff -urN UXP-RELBASE_20210719/xulrunner/app/moz.build xulrunner-source/xulrunne
  
  SOURCES += [
      'nsXULRunnerApp.cpp',
-diff -urN UXP-RELBASE_20210719/xulrunner/build.mk xulrunner-source/xulrunner/build.mk
---- UXP-RELBASE_20210719/xulrunner/build.mk	1970-01-01 01:00:00.000000000 +0100
-+++ xulrunner-source/xulrunner/build.mk	2021-07-23 16:01:31.147132383 +0200
+diff -aurN platform/xulrunner/app/xulrunner.js xulrunner-source/xulrunner/app/xulrunner.js
+--- platform/xulrunner/app/xulrunner.js	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/xulrunner/app/xulrunner.js	2022-01-06 13:30:30.298115622 +0100
+@@ -20,3 +20,16 @@
+ pref("browser.preferences.instantApply", true);
+ #endif
+ pref("browser.preferences.animateFadeIn", false);
++pref("accessibility.typeaheadfind.flashBar", 0);
++pref("app.update.auto", false);
++pref("app.update.enabled", false);
++pref("datareporting.healthreport.service.enabled", false);
++pref("datareporting.healthreport.uploadEnabled", false);
++pref("datareporting.policy.dataSubmissionEnabled", false);
++pref("extensions.update.autoUpdateDefault", false);
++pref("extensions.update.enabled", false);
++pref("javascript.options.showInConsole", true);
++pref("javascript.options.strict", true);
++pref("network.disable.ipc.security", true);
++pref("toolkit.telemetry.enabled", false);
++pref("toolkit.telemetry.server", "");
+diff -aurN platform/xulrunner/build.mk xulrunner-source/xulrunner/build.mk
+--- platform/xulrunner/build.mk	1970-01-01 01:00:00.000000000 +0100
++++ xulrunner-source/xulrunner/build.mk	2022-01-06 13:28:06.443958288 +0100
 @@ -0,0 +1,36 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,9 +73,9 @@ diff -urN UXP-RELBASE_20210719/xulrunner/build.mk xulrunner-source/xulrunner/bui
 +	@$(MAKE) -C xulrunner/installer deb
 +endif
 +
-diff -urN UXP-RELBASE_20210719/xulrunner/Makefile.in xulrunner-source/xulrunner/Makefile.in
---- UXP-RELBASE_20210719/xulrunner/Makefile.in	1970-01-01 01:00:00.000000000 +0100
-+++ xulrunner-source/xulrunner/Makefile.in	2021-07-23 16:01:31.147132383 +0200
+diff -aurN platform/xulrunner/Makefile.in xulrunner-source/xulrunner/Makefile.in
+--- platform/xulrunner/Makefile.in	1970-01-01 01:00:00.000000000 +0100
++++ xulrunner-source/xulrunner/Makefile.in	2022-01-06 13:28:06.443958288 +0100
 @@ -0,0 +1,14 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,9 +91,9 @@ diff -urN UXP-RELBASE_20210719/xulrunner/Makefile.in xulrunner-source/xulrunner/
 +	$(MAKE) -C installer/windows uninstaller
 +endif
 +
-diff -urN UXP-RELBASE_20210719/xulrunner/moz.build xulrunner-source/xulrunner/moz.build
---- UXP-RELBASE_20210719/xulrunner/moz.build	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/xulrunner/moz.build	2021-07-23 16:01:31.147132383 +0200
+diff -aurN platform/xulrunner/moz.build xulrunner-source/xulrunner/moz.build
+--- platform/xulrunner/moz.build	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/xulrunner/moz.build	2022-01-06 13:28:06.443958288 +0100
 @@ -7,4 +7,12 @@
  
  DIRS += [
@@ -87,9 +107,9 @@ diff -urN UXP-RELBASE_20210719/xulrunner/moz.build xulrunner-source/xulrunner/mo
 +if CONFIG['OS_ARCH'] == 'WINNT':
 +    DIRS += ['tools/redit']
 +
-diff -urN UXP-RELBASE_20210719/xulrunner/stub/moz.build xulrunner-source/xulrunner/stub/moz.build
---- UXP-RELBASE_20210719/xulrunner/stub/moz.build	2021-07-16 01:13:31.000000000 +0200
-+++ xulrunner-source/xulrunner/stub/moz.build	2021-07-23 16:01:31.147132383 +0200
+diff -aurN platform/xulrunner/stub/moz.build xulrunner-source/xulrunner/stub/moz.build
+--- platform/xulrunner/stub/moz.build	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/xulrunner/stub/moz.build	2022-01-06 13:28:06.443958288 +0100
 @@ -3,14 +3,12 @@
  # License, v. 2.0. If a copy of the MPL was not distributed with this
  # file, You can obtain one at http://mozilla.org/MPL/2.0/.

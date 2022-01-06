@@ -1,0 +1,172 @@
+diff -aurN platform/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
+--- platform/toolkit/components/console/content/console.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/console/content/console.xul	2022-01-06 13:04:51.896561336 +0100
+@@ -4,9 +4,9 @@
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+-<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> 
+-<?xml-stylesheet href="chrome://global/skin/console/console.css" type="text/css"?> 
+-<?xml-stylesheet href="chrome://global/content/console.css" type="text/css"?> 
++<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
++<?xml-stylesheet href="chrome://global/skin/console/console.css" type="text/css"?>
++<?xml-stylesheet href="chrome://global/content/console.css" type="text/css"?>
+ <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+ 
+ <!DOCTYPE window [
+@@ -17,10 +17,10 @@
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         title="&errorConsole.title;"
+         windowtype="global:console"
+-        width="640" height="480"
++        width="1280" height="576"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode"
+-        onclose="return closeWindow(false);"> 
++        onclose="return closeWindow(false);">
+ 
+   <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
+   <script type="application/javascript" src="chrome://global/content/console.js"/>
+@@ -61,7 +61,7 @@
+   <toolbox id="console-toolbox">
+     <toolbar class="chromeclass-toolbar" id="ToolbarMode">
+       <hbox id="viewGroup">
+-        <toolbarbutton type="radio" group="mode" id="Console:modeAll" 
++        <toolbarbutton type="radio" group="mode" id="Console:modeAll"
+                        label="&all.label;" accesskey="&all.accesskey;"
+                        oncommand="changeMode('All');"/>
+         <toolbarbutton type="radio" group="mode" id="Console:modeErrors"
+diff -aurN platform/toolkit/components/perfmonitoring/PerformanceStats.jsm xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm
+--- platform/toolkit/components/perfmonitoring/PerformanceStats.jsm	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm	2022-01-06 13:08:15.895287711 +0100
+@@ -275,7 +275,12 @@
+         result.totalSystemTime += stat.totalSystemTime;
+         result.totalCPUTime += stat.totalCPUTime;
+         for (let i = 0; i < stat.durations.length; ++i) {
+-          result.durations[i] += stat.durations[i];
++          if (i >= result.durations.length) {
++            result.durations.push(stat.durations[i]);
++          }
++          else {
++            result.durations[i] += stat.durations[i];
++          }
+         }
+         result.longestDuration = Math.max(result.longestDuration, stat.longestDuration);
+       }
+diff -aurN platform/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
+--- platform/toolkit/components/satchel/FormHistory.jsm	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2022-01-06 13:04:51.908561526 +0100
+@@ -633,7 +633,9 @@
+     switch (operation) {
+       case "remove":
+         log("Remove from form history  " + change);
+-        let delStmt = makeMoveToDeletedStatement(change.guid, now, change, bindingArrays);
++        let delStmt = makeMoveToDeletedStatement(
++            "guid" in change ? change.guid : "", now, change, bindingArrays
++        );
+         if (delStmt && stmts.indexOf(delStmt) == -1)
+           stmts.push(delStmt);
+         if ("timeDeleted" in change)
+diff -aurN platform/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
+--- platform/toolkit/components/viewsource/content/viewPartialSource.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2022-01-06 13:04:51.908561526 +0100
+@@ -25,7 +25,7 @@
+         titlepreface=""
+         titlemenuseparator ="&mainWindow.titlemodifierseparator;"
+         windowtype="navigator:view-source"
+-        width="500" height="300"
++        width="1024" height="576"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode">
+ 
+diff -aurN platform/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
+--- platform/toolkit/components/viewsource/content/viewSource.xul	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2022-01-06 13:04:51.908561526 +0100
+@@ -26,7 +26,7 @@
+         titlepreface="&mainWindow.preface;"
+         titlemenuseparator ="&mainWindow.titlemodifierseparator;"
+         windowtype="navigator:view-source"
+-        width="640" height="480"
++        width="1280" height="768"
+         screenX="10" screenY="10"
+         persist="screenX screenY width height sizemode">
+ 
+diff -aurN platform/toolkit/content/aboutSupport.js xulrunner-source/toolkit/content/aboutSupport.js
+--- platform/toolkit/content/aboutSupport.js	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/content/aboutSupport.js	2022-01-06 13:06:41.922191011 +0100
+@@ -277,7 +277,7 @@
+                      ? data.windowLayerManagerType
+                      : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+     addRow("features", "compositing", compositor);
+-    
++
+     let acceleratedWindows = data.numAcceleratedWindows + "/" + data.numTotalWindows;
+     if (data.windowLayerManagerType) {
+       acceleratedWindows += " " + data.windowLayerManagerType;
+@@ -392,7 +392,7 @@
+           if (entry.message.length > 0 && entry.message[0] == "#") {
+             // This is a failure ID. See nsIGfxInfo.idl.
+             let m;
+-            if (m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message)) {
++            if ((m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message))) {
+               let bugSpan = $.new("span");
+               bugSpan.textContent = strings.GetStringFromName("blocklistedBug") + "; ";
+ 
+diff -aurN platform/toolkit/content/plugins.html xulrunner-source/toolkit/content/plugins.html
+--- platform/toolkit/content/plugins.html	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/content/plugins.html	2022-01-06 13:04:51.908561526 +0100
+@@ -19,7 +19,9 @@
+   document.writeln("<title>" + pluginsbundle.GetStringFromName("title_label") + "<\/title>");
+ </script>
+ <link rel="stylesheet" type="text/css" href="chrome://global/content/plugins.css">
++<!-- inexistant
+ <link rel="stylesheet" type="text/css" href="chrome://global/skin/plugins.css">
++-->
+ </head>
+ <body>
+ <div id="outside">
+diff -aurN platform/toolkit/themes/shared/non-mac.jar.inc.mn xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn
+--- platform/toolkit/themes/shared/non-mac.jar.inc.mn	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn	2022-01-06 13:04:51.912561590 +0100
+@@ -55,6 +55,9 @@
+ 
+   skin/classic/global/checkbox/cbox-check.gif              (../../windows/global/checkbox/cbox-check.gif)
+   skin/classic/global/checkbox/cbox-check-dis.gif          (../../windows/global/checkbox/cbox-check-dis.gif)
++  skin/classic/global/console/console-error-caret.gif      (../../windows/global/console/console-error-caret.gif)
++  skin/classic/global/console/console-error-dash.gif       (../../windows/global/console/console-error-dash.gif)
++  skin/classic/global/console/itemSelected.png             (../../windows/global/console/itemSelected.png)
+ * skin/classic/global/dirListing/dirListing.css            (../../windows/global/dirListing/dirListing.css)
+   skin/classic/global/dirListing/folder.png                (../../windows/global/dirListing/folder.png)
+   skin/classic/global/dirListing/local.png                 (../../windows/global/dirListing/local.png)
+@@ -92,6 +95,7 @@
+   skin/classic/global/icons/warning-16.png                 (../../windows/global/icons/warning-16.png)
+   skin/classic/global/icons/warning-64.png                 (../../windows/global/icons/warning-64.png)
+   skin/classic/global/icons/windowControls.png             (../../windows/global/icons/windowControls.png)
++  skin/classic/global/inContentUI/background-texture.png   (../../windows/global/inContentUI/background-texture.png)
+   skin/classic/global/radio/radio-check.gif                (../../windows/global/radio/radio-check.gif)
+   skin/classic/global/radio/radio-check-dis.gif            (../../windows/global/radio/radio-check-dis.gif)
+   skin/classic/global/scale/scale-tray-horiz.gif           (../../windows/global/scale/scale-tray-horiz.gif)
+@@ -111,6 +115,13 @@
+ 
+   skin/classic/mozapps/downloads/downloadButtons.png         (../../windows/mozapps/downloads/downloadButtons.png)
+   skin/classic/mozapps/downloads/unknownContentType.css      (../../windows/mozapps/downloads/unknownContentType.css)
++  skin/classic/mozapps/extensions/about.css                  (../../windows/mozapps/extensions/about.css)
++  skin/classic/mozapps/extensions/blocklist.css              (../../windows/mozapps/extensions/blocklist.css)
++  skin/classic/mozapps/extensions/discover-logo.png          (../../windows/mozapps/extensions/discover-logo.png)
++  skin/classic/mozapps/extensions/rating-won.png             (../../windows/mozapps/extensions/rating-won.png)
++  skin/classic/mozapps/extensions/rating-not-won.png         (../../windows/mozapps/extensions/rating-not-won.png)
++  skin/classic/mozapps/extensions/cancel.png                 (../../windows/mozapps/extensions/cancel.png)
++  skin/classic/mozapps/extensions/eula.css                   (../../windows/mozapps/extensions/eula.css)
+   skin/classic/mozapps/handling/handling.css                 (../../windows/mozapps/handling/handling.css)
+   skin/classic/mozapps/plugins/pluginBlocked-64.png          (../../windows/mozapps/plugins/pluginBlocked-64.png)
+   skin/classic/mozapps/plugins/pluginHelp-16.png             (../../windows/mozapps/plugins/pluginHelp-16.png)
+diff -aurN platform/toolkit/themes/windows/global/inContentUI/background-texture.png xulrunner-source/toolkit/themes/windows/global/inContentUI/background-texture.png
+--- platform/toolkit/themes/windows/global/inContentUI/background-texture.png	1970-01-01 01:00:00.000000000 +0100
++++ xulrunner-source/toolkit/themes/windows/global/inContentUI/background-texture.png	2022-01-06 13:04:51.912561590 +0100
+@@ -0,0 +1,5 @@
++âPNG
++
++   IHDR         rP6Ã   tEXtSoftware Adobe ImageReadyq…e<  "iTXtXML:com.adobe.xmp     <?xpacket begin="Ôªø" id="W5M0MpCehiHzreSzNTczkc9d"?> <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.0-c060 61.134777, 2010/02/12-17:32:00        "> <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"> <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmp:CreatorTool="Adobe Photoshop CS5 Macintosh" xmpMM:InstanceID="xmp.iid:7ACC34E2C35911DF8519F58CBF5D9BBF" xmpMM:DocumentID="xmp.did:7ACC34E3C35911DF8519F58CBF5D9BBF"> <xmpMM:DerivedFrom stRef:instanceID="xmp.iid:7ACC34E0C35911DF8519F58CBF5D9BBF" stRef:documentID="xmp.did:7ACC34E1C35911DF8519F58CBF5D9BBF"/> </rdf:Description> </rdf:RDF> </x:xmpmeta> <?xpacket end="r"?>ê˘¨  KIDATx⁄lTYOSA=ΩΩ•¥–Ö‚eiÉPDÖ QÑ5}1Ò7öòç/<jH4JÅ	K!í¥Y V®]†•t¡9ﬂ•$ÇìLf;sÊ|€Xf#€˛r•›™√¶k(ï´‡∫ŒV∂rπ,£ÆÎ2ûóŒo`kkçãâÒ	47jhs…ds·9ºêã≈çFØ÷Û?Áqxx(X√•arb•RI÷*#Q2[F°PÄ◊„ÇCâ8ŒQ©V‡s9EQ*óáU≥¢ŸeGAâMgrp80‹:éO™»f≥–(œ©,"—‚“¢º‡Q˜˘˙zl])ÜtŒπ«3bñóóëœÁÂ.9B°ê©å¶˘€[€+ÒÌ6Ï6‡˜~NîuµπP,[˚)Q‘›Í¿·	∞ªw √0–·ªÙ˝‚0˝+D;;;¢†^ë•R)Èús/ëHF”Ä•*èKÿ,·’Ñüéç≈åæ;rÈ◊Vg≈"˙É4â'Qo∑£Ô∂ôº:_ﬂFKKãRhG"mJ√e£≥”È¥ò∆F¢”ì‘)≈∫2Á1ƒ÷“∆™Xééé`ô^⁄Ùìı·@Ø8zm;'fçÙw
++—B4âãjèÓ∑*sÄ &|>z;\*ä¿‚ zzz–yK7ï]\\‡z£ir¶àÆ∑ˇ·ˇÒYt//·˘xPúME4ÌŸPPÄShhlƒ–]g*™ﬂ√´ËÍÍ¬Ω@ˆ≥¿Ãlzçï	Èız%¸$£≥•ú*Ê9âj{ƒ∏›Ó´´(Ò4›2µ∏·gâºzÒD¢âß$¸Øü
++P˘T∆ß:e¸Ú#Ç@ Ä¡nrg¿¯◊è#h‘)rU§¡`PJƒ£¿LHÇ~Fç/“G4çäxF€È9‰.9ƒœ,Ö·ﬁ6©µ—±êd6_e}õçH‘ò[Ù˜x÷”ÓÏütVÓí„Õ«1≥úX˝ô≤‘Zì◊-ôùÃ%èö=ÚÍqÊT|dxÏ¢àDNß≠…\ôL∆,ß˜£cR˝T¿Z£òŸåÛàùsÓÒ,±ª/XÒ.ø†Å`ì©åõÕv„sdfœÕ,∑´f‘Æéµªı6ÕÙ_‰ÙÈÛòT?#√™MœJf≥3è∏«3bà•iºK¢∑Ô>‡Ø  jH¡∏1xT    IENDÆB`Ç
+\ No newline at end of file
