@@ -1,6 +1,48 @@
+diff -aurN platform/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm xulrunner-source/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm
+--- platform/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm	2022-01-09 15:06:50.753501066 +0100
+@@ -31,7 +31,7 @@
+     "chrome://mochikit/content/tests/BrowserTestUtils/content-utils.js", true);
+ 
+ XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
+-  "resource:///modules/E10SUtils.jsm");
++  "resource://gre/modules/E10SUtils.jsm");
+ 
+ // For now, we'll allow tests to use CPOWs in this module for
+ // some cases.
+diff -aurN platform/testing/talos/talos/pageloader/chrome/pageloader.js xulrunner-source/testing/talos/talos/pageloader/chrome/pageloader.js
+--- platform/testing/talos/talos/pageloader/chrome/pageloader.js	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/testing/talos/talos/pageloader/chrome/pageloader.js	2022-01-09 15:06:50.753501066 +0100
+@@ -11,7 +11,7 @@
+ 
+ Components.utils.import("resource://gre/modules/Services.jsm");
+ Components.utils.import("resource://gre/modules/Task.jsm");
+-Components.utils.import("resource:///modules/E10SUtils.jsm");
++Components.utils.import("resource://gre/modules/E10SUtils.jsm");
+ 
+ var NUM_CYCLES = 5;
+ var numPageCycles = 1;
+@@ -119,7 +119,7 @@
+ 
+   try {
+     var args;
+-    
++
+     /*
+      * Desktop firefox:
+      * non-chrome talos runs - tp-cmdline will create and load pageloader
+@@ -202,7 +202,7 @@
+     if (profilingInfo) {
+       Profiler.beginTest(getCurrentPageShortName());
+     }
+-  
++
+     if (args.useBrowserChrome) {
+       // Create a new chromed browser window for content
+       var wwatch = Cc["@mozilla.org/embedcomp/window-watcher;1"]
 diff -aurN platform/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
 --- platform/toolkit/components/console/content/console.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/console/content/console.xul	2022-01-06 13:04:51.896561336 +0100
++++ xulrunner-source/toolkit/components/console/content/console.xul	2022-01-09 15:06:50.753501066 +0100
 @@ -4,9 +4,9 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
@@ -38,7 +80,7 @@ diff -aurN platform/toolkit/components/console/content/console.xul xulrunner-sou
          <toolbarbutton type="radio" group="mode" id="Console:modeErrors"
 diff -aurN platform/toolkit/components/perfmonitoring/PerformanceStats.jsm xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm
 --- platform/toolkit/components/perfmonitoring/PerformanceStats.jsm	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm	2022-01-06 13:08:15.895287711 +0100
++++ xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm	2022-01-09 15:06:50.753501066 +0100
 @@ -275,7 +275,12 @@
          result.totalSystemTime += stat.totalSystemTime;
          result.totalCPUTime += stat.totalCPUTime;
@@ -55,7 +97,7 @@ diff -aurN platform/toolkit/components/perfmonitoring/PerformanceStats.jsm xulru
        }
 diff -aurN platform/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
 --- platform/toolkit/components/satchel/FormHistory.jsm	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2022-01-06 13:04:51.908561526 +0100
++++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2022-01-09 15:06:50.757501094 +0100
 @@ -633,7 +633,9 @@
      switch (operation) {
        case "remove":
@@ -69,7 +111,7 @@ diff -aurN platform/toolkit/components/satchel/FormHistory.jsm xulrunner-source/
          if ("timeDeleted" in change)
 diff -aurN platform/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
 --- platform/toolkit/components/viewsource/content/viewPartialSource.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2022-01-06 13:04:51.908561526 +0100
++++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2022-01-09 15:06:50.757501094 +0100
 @@ -25,7 +25,7 @@
          titlepreface=""
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -81,7 +123,7 @@ diff -aurN platform/toolkit/components/viewsource/content/viewPartialSource.xul 
  
 diff -aurN platform/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
 --- platform/toolkit/components/viewsource/content/viewSource.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2022-01-06 13:04:51.908561526 +0100
++++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2022-01-09 15:06:50.757501094 +0100
 @@ -26,7 +26,7 @@
          titlepreface="&mainWindow.preface;"
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -93,7 +135,7 @@ diff -aurN platform/toolkit/components/viewsource/content/viewSource.xul xulrunn
  
 diff -aurN platform/toolkit/content/aboutSupport.js xulrunner-source/toolkit/content/aboutSupport.js
 --- platform/toolkit/content/aboutSupport.js	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/content/aboutSupport.js	2022-01-06 13:06:41.922191011 +0100
++++ xulrunner-source/toolkit/content/aboutSupport.js	2022-01-09 15:06:50.785501284 +0100
 @@ -277,7 +277,7 @@
                       ? data.windowLayerManagerType
                       : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
@@ -114,7 +156,7 @@ diff -aurN platform/toolkit/content/aboutSupport.js xulrunner-source/toolkit/con
  
 diff -aurN platform/toolkit/content/plugins.html xulrunner-source/toolkit/content/plugins.html
 --- platform/toolkit/content/plugins.html	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/content/plugins.html	2022-01-06 13:04:51.908561526 +0100
++++ xulrunner-source/toolkit/content/plugins.html	2022-01-09 15:06:50.785501284 +0100
 @@ -19,7 +19,9 @@
    document.writeln("<title>" + pluginsbundle.GetStringFromName("title_label") + "<\/title>");
  </script>
@@ -125,48 +167,146 @@ diff -aurN platform/toolkit/content/plugins.html xulrunner-source/toolkit/conten
  </head>
  <body>
  <div id="outside">
-diff -aurN platform/toolkit/themes/shared/non-mac.jar.inc.mn xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn
---- platform/toolkit/themes/shared/non-mac.jar.inc.mn	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/themes/shared/non-mac.jar.inc.mn	2022-01-06 13:04:51.912561590 +0100
-@@ -55,6 +55,9 @@
- 
-   skin/classic/global/checkbox/cbox-check.gif              (../../windows/global/checkbox/cbox-check.gif)
-   skin/classic/global/checkbox/cbox-check-dis.gif          (../../windows/global/checkbox/cbox-check-dis.gif)
-+  skin/classic/global/console/console-error-caret.gif      (../../windows/global/console/console-error-caret.gif)
-+  skin/classic/global/console/console-error-dash.gif       (../../windows/global/console/console-error-dash.gif)
-+  skin/classic/global/console/itemSelected.png             (../../windows/global/console/itemSelected.png)
- * skin/classic/global/dirListing/dirListing.css            (../../windows/global/dirListing/dirListing.css)
-   skin/classic/global/dirListing/folder.png                (../../windows/global/dirListing/folder.png)
-   skin/classic/global/dirListing/local.png                 (../../windows/global/dirListing/local.png)
-@@ -92,6 +95,7 @@
-   skin/classic/global/icons/warning-16.png                 (../../windows/global/icons/warning-16.png)
-   skin/classic/global/icons/warning-64.png                 (../../windows/global/icons/warning-64.png)
-   skin/classic/global/icons/windowControls.png             (../../windows/global/icons/windowControls.png)
-+  skin/classic/global/inContentUI/background-texture.png   (../../windows/global/inContentUI/background-texture.png)
-   skin/classic/global/radio/radio-check.gif                (../../windows/global/radio/radio-check.gif)
-   skin/classic/global/radio/radio-check-dis.gif            (../../windows/global/radio/radio-check-dis.gif)
-   skin/classic/global/scale/scale-tray-horiz.gif           (../../windows/global/scale/scale-tray-horiz.gif)
-@@ -111,6 +115,13 @@
- 
-   skin/classic/mozapps/downloads/downloadButtons.png         (../../windows/mozapps/downloads/downloadButtons.png)
-   skin/classic/mozapps/downloads/unknownContentType.css      (../../windows/mozapps/downloads/unknownContentType.css)
-+  skin/classic/mozapps/extensions/about.css                  (../../windows/mozapps/extensions/about.css)
-+  skin/classic/mozapps/extensions/blocklist.css              (../../windows/mozapps/extensions/blocklist.css)
-+  skin/classic/mozapps/extensions/discover-logo.png          (../../windows/mozapps/extensions/discover-logo.png)
-+  skin/classic/mozapps/extensions/rating-won.png             (../../windows/mozapps/extensions/rating-won.png)
-+  skin/classic/mozapps/extensions/rating-not-won.png         (../../windows/mozapps/extensions/rating-not-won.png)
-+  skin/classic/mozapps/extensions/cancel.png                 (../../windows/mozapps/extensions/cancel.png)
-+  skin/classic/mozapps/extensions/eula.css                   (../../windows/mozapps/extensions/eula.css)
-   skin/classic/mozapps/handling/handling.css                 (../../windows/mozapps/handling/handling.css)
-   skin/classic/mozapps/plugins/pluginBlocked-64.png          (../../windows/mozapps/plugins/pluginBlocked-64.png)
-   skin/classic/mozapps/plugins/pluginHelp-16.png             (../../windows/mozapps/plugins/pluginHelp-16.png)
-diff -aurN platform/toolkit/themes/windows/global/inContentUI/background-texture.png xulrunner-source/toolkit/themes/windows/global/inContentUI/background-texture.png
---- platform/toolkit/themes/windows/global/inContentUI/background-texture.png	1970-01-01 01:00:00.000000000 +0100
-+++ xulrunner-source/toolkit/themes/windows/global/inContentUI/background-texture.png	2022-01-06 13:04:51.912561590 +0100
-@@ -0,0 +1,5 @@
-+âPNG
-+
-+   IHDR         rP6Ã   tEXtSoftware Adobe ImageReadyq…e<  "iTXtXML:com.adobe.xmp     <?xpacket begin="Ôªø" id="W5M0MpCehiHzreSzNTczkc9d"?> <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.0-c060 61.134777, 2010/02/12-17:32:00        "> <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"> <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmp:CreatorTool="Adobe Photoshop CS5 Macintosh" xmpMM:InstanceID="xmp.iid:7ACC34E2C35911DF8519F58CBF5D9BBF" xmpMM:DocumentID="xmp.did:7ACC34E3C35911DF8519F58CBF5D9BBF"> <xmpMM:DerivedFrom stRef:instanceID="xmp.iid:7ACC34E0C35911DF8519F58CBF5D9BBF" stRef:documentID="xmp.did:7ACC34E1C35911DF8519F58CBF5D9BBF"/> </rdf:Description> </rdf:RDF> </x:xmpmeta> <?xpacket end="r"?>ê˘¨  KIDATx⁄lTYOSA=ΩΩ•¥–Ö‚eiÉPDÖ QÑ5}1Ò7öòç/<jH4JÅ	K!í¥Y V®]†•t¡9ﬂ•$ÇìLf;sÊ|€Xf#€˛r•›™√¶k(ï´‡∫ŒV∂rπ,£ÆÎ2ûóŒo`kkçãâÒ	47jhs…ds·9ºêã≈çFØ÷Û?Áqxx(X√•arb•RI÷*#Q2[F°PÄ◊„ÇCâ8ŒQ©V‡s9EQ*óáU≥¢ŸeGAâMgrp80‹:éO™»f≥–(œ©,"—‚“¢º‡Q˜˘˙zl])ÜtŒπ«3bñóóëœÁÂ.9B°ê©å¶˘€[€+ÒÌ6Ï6‡˜~NîuµπP,[˚)Q‘›Í¿·	∞ªw √0–·ªÙ˝‚0˝+D;;;¢†^ë•R)Èús/ëHF”Ä•*èKÿ,·’Ñüéç≈åæ;rÈ◊Vg≈"˙É4â'Qo∑£Ô∂ôº:_ﬂFKKãRhG"mJ√e£≥”È¥ò∆F¢”ì‘)≈∫2Á1ƒ÷“∆™Xééé`ô^⁄Ùìı·@Ø8zm;'fçÙw
-+—B4âãjèÓ∑*sÄ &|>z;\*ä¿‚ zzz–yK7ï]\\‡z£ir¶àÆ∑ˇ·ˇÒYt//·˘xPúME4ÌŸPPÄShhlƒ–]g*™ﬂ√´ËÍÍ¬Ω@ˆ≥¿Ãlzçï	Èız%¸$£≥•ú*Ê9âj{ƒ∏›Ó´´(Ò4›2µ∏·gâºzÒD¢âß$¸Øü
-+P˘T∆ß:e¸Ú#Ç@ Ä¡nrg¿¯◊è#h‘)rU§¡`PJƒ£¿LHÇ~Fç/“G4çäxF€È9‰.9ƒœ,Ö·ﬁ6©µ—±êd6_e}õçH‘ò[Ù˜x÷”ÓÏütVÓí„Õ«1≥úX˝ô≤‘Zì◊-ôùÃ%èö=ÚÍqÊT|dxÏ¢àDNß≠…\ôL∆,ß˜£cR˝T¿Z£òŸåÛàùsÓÒ,±ª/XÒ.ø†Å`ì©åõÕv„sdfœÕ,∑´f‘Æéµªı6ÕÙ_‰ÙÈÛòT?#√™MœJf≥3è∏«3bà•iºK¢∑Ô>‡Ø  jH¡∏1xT    IENDÆB`Ç
-\ No newline at end of file
+diff -aurN platform/toolkit/modules/E10SUtils.jsm xulrunner-source/toolkit/modules/E10SUtils.jsm
+--- platform/toolkit/modules/E10SUtils.jsm	1970-01-01 01:00:00.000000000 +0100
++++ xulrunner-source/toolkit/modules/E10SUtils.jsm	2022-01-09 15:06:50.785501284 +0100
+@@ -0,0 +1,128 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++"use strict";
++
++this.EXPORTED_SYMBOLS = ["E10SUtils"];
++
++const {interfaces: Ci, utils: Cu, classes: Cc} = Components;
++
++Cu.import("resource://gre/modules/Services.jsm");
++
++function getAboutModule(aURL) {
++  // Needs to match NS_GetAboutModuleName
++  let moduleName = aURL.path.replace(/[#?].*/, "").toLowerCase();
++  let contract = "@mozilla.org/network/protocol/about;1?what=" + moduleName;
++  try {
++    return Cc[contract].getService(Ci.nsIAboutModule);
++  }
++  catch (e) {
++    // Either the about module isn't defined or it is broken. In either case
++    // ignore it.
++    return null;
++  }
++}
++
++this.E10SUtils = {
++  canLoadURIInProcess: function(aURL, aProcess) {
++    // loadURI in browser.xml treats null as about:blank
++    if (!aURL)
++      aURL = "about:blank";
++
++    // Javascript urls can load in any process, they apply to the current document
++    if (aURL.startsWith("javascript:"))
++      return true;
++
++    let processIsRemote = aProcess == Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT;
++
++    let canLoadRemote = true;
++    let mustLoadRemote = true;
++
++    if (aURL.startsWith("about:")) {
++      let url = Services.io.newURI(aURL, null, null);
++      let module = getAboutModule(url);
++      // If the module doesn't exist then an error page will be loading, that
++      // should be ok to load in either process
++      if (module) {
++        let flags = module.getURIFlags(url);
++        canLoadRemote = !!(flags & Ci.nsIAboutModule.URI_CAN_LOAD_IN_CHILD);
++        mustLoadRemote = !!(flags & Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD);
++      }
++    }
++
++    if (aURL.startsWith("chrome:")) {
++      let url;
++      try {
++        // This can fail for invalid Chrome URIs, in which case we will end up
++        // not loading anything anyway.
++        url = Services.io.newURI(aURL, null, null);
++      } catch (ex) {
++        canLoadRemote = true;
++        mustLoadRemote = false;
++      }
++      if (url) {
++        let chromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
++                        getService(Ci.nsIXULChromeRegistry);
++        canLoadRemote = chromeReg.canLoadURLRemotely(url);
++        mustLoadRemote = chromeReg.mustLoadURLRemotely(url);
++      }
++    }
++
++    if (aURL.startsWith("moz-extension:")) {
++      canLoadRemote = false;
++      mustLoadRemote = false;
++    }
++
++    if (aURL.startsWith("view-source:")) {
++      return this.canLoadURIInProcess(aURL.substr("view-source:".length), aProcess);
++    }
++
++    if (mustLoadRemote)
++      return processIsRemote;
++
++    if (!canLoadRemote && processIsRemote)
++      return false;
++
++    return true;
++  },
++
++  shouldLoadURI: function(aDocShell, aURI, aReferrer) {
++    // Inner frames should always load in the current process
++    if (aDocShell.QueryInterface(Ci.nsIDocShellTreeItem).sameTypeParent)
++      return true;
++
++    // If the URI can be loaded in the current process then continue
++    return this.canLoadURIInProcess(aURI.spec, Services.appinfo.processType);
++  },
++
++  redirectLoad: function(aDocShell, aURI, aReferrer, aFreshProcess) {
++    // Retarget the load to the correct process
++    let messageManager = aDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
++                                  .getInterface(Ci.nsIContentFrameMessageManager);
++    let sessionHistory = aDocShell.getInterface(Ci.nsIWebNavigation).sessionHistory;
++
++    messageManager.sendAsyncMessage("Browser:LoadURI", {
++      loadOptions: {
++        uri: aURI.spec,
++        flags: Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
++        referrer: aReferrer ? aReferrer.spec : null,
++        reloadInFreshProcess: !!aFreshProcess,
++      },
++      historyIndex: sessionHistory.requestedIndex,
++    });
++    return false;
++  },
++
++  wrapHandlingUserInput: function(aWindow, aIsHandling, aCallback) {
++    var handlingUserInput;
++    try {
++      handlingUserInput = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
++                                 .getInterface(Ci.nsIDOMWindowUtils)
++                                 .setHandlingUserInput(aIsHandling);
++      aCallback();
++    } finally {
++      handlingUserInput.destruct();
++    }
++  },
++};
+diff -aurN platform/toolkit/modules/moz.build xulrunner-source/toolkit/modules/moz.build
+--- platform/toolkit/modules/moz.build	2021-08-22 19:42:44.000000000 +0200
++++ xulrunner-source/toolkit/modules/moz.build	2022-01-09 15:06:50.785501284 +0100
+@@ -27,6 +27,7 @@
+     'debug.js',
+     'DeferredTask.jsm',
+     'Deprecated.jsm',
++    'E10SUtils.jsm',
+     'ExtensionStorage.jsm',
+     'FileUtils.jsm',
+     'Finder.jsm',
