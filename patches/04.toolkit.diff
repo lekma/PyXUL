@@ -1,48 +1,6 @@
-diff -aurN platform/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm xulrunner-source/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm
---- platform/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/testing/mochitest/BrowserTestUtils/BrowserTestUtils.jsm	2022-01-09 15:06:50.753501066 +0100
-@@ -31,7 +31,7 @@
-     "chrome://mochikit/content/tests/BrowserTestUtils/content-utils.js", true);
- 
- XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
--  "resource:///modules/E10SUtils.jsm");
-+  "resource://gre/modules/E10SUtils.jsm");
- 
- // For now, we'll allow tests to use CPOWs in this module for
- // some cases.
-diff -aurN platform/testing/talos/talos/pageloader/chrome/pageloader.js xulrunner-source/testing/talos/talos/pageloader/chrome/pageloader.js
---- platform/testing/talos/talos/pageloader/chrome/pageloader.js	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/testing/talos/talos/pageloader/chrome/pageloader.js	2022-01-09 15:06:50.753501066 +0100
-@@ -11,7 +11,7 @@
- 
- Components.utils.import("resource://gre/modules/Services.jsm");
- Components.utils.import("resource://gre/modules/Task.jsm");
--Components.utils.import("resource:///modules/E10SUtils.jsm");
-+Components.utils.import("resource://gre/modules/E10SUtils.jsm");
- 
- var NUM_CYCLES = 5;
- var numPageCycles = 1;
-@@ -119,7 +119,7 @@
- 
-   try {
-     var args;
--    
-+
-     /*
-      * Desktop firefox:
-      * non-chrome talos runs - tp-cmdline will create and load pageloader
-@@ -202,7 +202,7 @@
-     if (profilingInfo) {
-       Profiler.beginTest(getCurrentPageShortName());
-     }
--  
-+
-     if (args.useBrowserChrome) {
-       // Create a new chromed browser window for content
-       var wwatch = Cc["@mozilla.org/embedcomp/window-watcher;1"]
 diff -aurN platform/toolkit/components/console/content/console.xul xulrunner-source/toolkit/components/console/content/console.xul
 --- platform/toolkit/components/console/content/console.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/console/content/console.xul	2022-01-09 15:06:50.753501066 +0100
++++ xulrunner-source/toolkit/components/console/content/console.xul	2022-01-12 09:25:38.782414581 +0100
 @@ -4,9 +4,9 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
@@ -80,7 +38,7 @@ diff -aurN platform/toolkit/components/console/content/console.xul xulrunner-sou
          <toolbarbutton type="radio" group="mode" id="Console:modeErrors"
 diff -aurN platform/toolkit/components/perfmonitoring/PerformanceStats.jsm xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm
 --- platform/toolkit/components/perfmonitoring/PerformanceStats.jsm	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm	2022-01-09 15:06:50.753501066 +0100
++++ xulrunner-source/toolkit/components/perfmonitoring/PerformanceStats.jsm	2022-01-12 09:25:38.782414581 +0100
 @@ -275,7 +275,12 @@
          result.totalSystemTime += stat.totalSystemTime;
          result.totalCPUTime += stat.totalCPUTime;
@@ -97,7 +55,7 @@ diff -aurN platform/toolkit/components/perfmonitoring/PerformanceStats.jsm xulru
        }
 diff -aurN platform/toolkit/components/satchel/FormHistory.jsm xulrunner-source/toolkit/components/satchel/FormHistory.jsm
 --- platform/toolkit/components/satchel/FormHistory.jsm	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2022-01-09 15:06:50.757501094 +0100
++++ xulrunner-source/toolkit/components/satchel/FormHistory.jsm	2022-01-12 09:25:38.782414581 +0100
 @@ -633,7 +633,9 @@
      switch (operation) {
        case "remove":
@@ -111,7 +69,7 @@ diff -aurN platform/toolkit/components/satchel/FormHistory.jsm xulrunner-source/
          if ("timeDeleted" in change)
 diff -aurN platform/toolkit/components/viewsource/content/viewPartialSource.xul xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul
 --- platform/toolkit/components/viewsource/content/viewPartialSource.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2022-01-09 15:06:50.757501094 +0100
++++ xulrunner-source/toolkit/components/viewsource/content/viewPartialSource.xul	2022-01-12 09:25:38.782414581 +0100
 @@ -25,7 +25,7 @@
          titlepreface=""
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -123,7 +81,7 @@ diff -aurN platform/toolkit/components/viewsource/content/viewPartialSource.xul 
  
 diff -aurN platform/toolkit/components/viewsource/content/viewSource.xul xulrunner-source/toolkit/components/viewsource/content/viewSource.xul
 --- platform/toolkit/components/viewsource/content/viewSource.xul	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2022-01-09 15:06:50.757501094 +0100
++++ xulrunner-source/toolkit/components/viewsource/content/viewSource.xul	2022-01-12 09:25:38.782414581 +0100
 @@ -26,7 +26,7 @@
          titlepreface="&mainWindow.preface;"
          titlemenuseparator ="&mainWindow.titlemodifierseparator;"
@@ -135,7 +93,7 @@ diff -aurN platform/toolkit/components/viewsource/content/viewSource.xul xulrunn
  
 diff -aurN platform/toolkit/content/aboutSupport.js xulrunner-source/toolkit/content/aboutSupport.js
 --- platform/toolkit/content/aboutSupport.js	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/content/aboutSupport.js	2022-01-09 15:06:50.785501284 +0100
++++ xulrunner-source/toolkit/content/aboutSupport.js	2022-01-12 09:25:38.782414581 +0100
 @@ -277,7 +277,7 @@
                       ? data.windowLayerManagerType
                       : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
@@ -156,7 +114,7 @@ diff -aurN platform/toolkit/content/aboutSupport.js xulrunner-source/toolkit/con
  
 diff -aurN platform/toolkit/content/plugins.html xulrunner-source/toolkit/content/plugins.html
 --- platform/toolkit/content/plugins.html	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/content/plugins.html	2022-01-09 15:06:50.785501284 +0100
++++ xulrunner-source/toolkit/content/plugins.html	2022-01-12 09:25:38.886416201 +0100
 @@ -19,7 +19,9 @@
    document.writeln("<title>" + pluginsbundle.GetStringFromName("title_label") + "<\/title>");
  </script>
@@ -167,146 +125,3 @@ diff -aurN platform/toolkit/content/plugins.html xulrunner-source/toolkit/conten
  </head>
  <body>
  <div id="outside">
-diff -aurN platform/toolkit/modules/E10SUtils.jsm xulrunner-source/toolkit/modules/E10SUtils.jsm
---- platform/toolkit/modules/E10SUtils.jsm	1970-01-01 01:00:00.000000000 +0100
-+++ xulrunner-source/toolkit/modules/E10SUtils.jsm	2022-01-09 15:06:50.785501284 +0100
-@@ -0,0 +1,128 @@
-+/* This Source Code Form is subject to the terms of the Mozilla Public
-+ * License, v. 2.0. If a copy of the MPL was not distributed with this
-+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-+
-+"use strict";
-+
-+this.EXPORTED_SYMBOLS = ["E10SUtils"];
-+
-+const {interfaces: Ci, utils: Cu, classes: Cc} = Components;
-+
-+Cu.import("resource://gre/modules/Services.jsm");
-+
-+function getAboutModule(aURL) {
-+  // Needs to match NS_GetAboutModuleName
-+  let moduleName = aURL.path.replace(/[#?].*/, "").toLowerCase();
-+  let contract = "@mozilla.org/network/protocol/about;1?what=" + moduleName;
-+  try {
-+    return Cc[contract].getService(Ci.nsIAboutModule);
-+  }
-+  catch (e) {
-+    // Either the about module isn't defined or it is broken. In either case
-+    // ignore it.
-+    return null;
-+  }
-+}
-+
-+this.E10SUtils = {
-+  canLoadURIInProcess: function(aURL, aProcess) {
-+    // loadURI in browser.xml treats null as about:blank
-+    if (!aURL)
-+      aURL = "about:blank";
-+
-+    // Javascript urls can load in any process, they apply to the current document
-+    if (aURL.startsWith("javascript:"))
-+      return true;
-+
-+    let processIsRemote = aProcess == Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT;
-+
-+    let canLoadRemote = true;
-+    let mustLoadRemote = true;
-+
-+    if (aURL.startsWith("about:")) {
-+      let url = Services.io.newURI(aURL, null, null);
-+      let module = getAboutModule(url);
-+      // If the module doesn't exist then an error page will be loading, that
-+      // should be ok to load in either process
-+      if (module) {
-+        let flags = module.getURIFlags(url);
-+        canLoadRemote = !!(flags & Ci.nsIAboutModule.URI_CAN_LOAD_IN_CHILD);
-+        mustLoadRemote = !!(flags & Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD);
-+      }
-+    }
-+
-+    if (aURL.startsWith("chrome:")) {
-+      let url;
-+      try {
-+        // This can fail for invalid Chrome URIs, in which case we will end up
-+        // not loading anything anyway.
-+        url = Services.io.newURI(aURL, null, null);
-+      } catch (ex) {
-+        canLoadRemote = true;
-+        mustLoadRemote = false;
-+      }
-+      if (url) {
-+        let chromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
-+                        getService(Ci.nsIXULChromeRegistry);
-+        canLoadRemote = chromeReg.canLoadURLRemotely(url);
-+        mustLoadRemote = chromeReg.mustLoadURLRemotely(url);
-+      }
-+    }
-+
-+    if (aURL.startsWith("moz-extension:")) {
-+      canLoadRemote = false;
-+      mustLoadRemote = false;
-+    }
-+
-+    if (aURL.startsWith("view-source:")) {
-+      return this.canLoadURIInProcess(aURL.substr("view-source:".length), aProcess);
-+    }
-+
-+    if (mustLoadRemote)
-+      return processIsRemote;
-+
-+    if (!canLoadRemote && processIsRemote)
-+      return false;
-+
-+    return true;
-+  },
-+
-+  shouldLoadURI: function(aDocShell, aURI, aReferrer) {
-+    // Inner frames should always load in the current process
-+    if (aDocShell.QueryInterface(Ci.nsIDocShellTreeItem).sameTypeParent)
-+      return true;
-+
-+    // If the URI can be loaded in the current process then continue
-+    return this.canLoadURIInProcess(aURI.spec, Services.appinfo.processType);
-+  },
-+
-+  redirectLoad: function(aDocShell, aURI, aReferrer, aFreshProcess) {
-+    // Retarget the load to the correct process
-+    let messageManager = aDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
-+                                  .getInterface(Ci.nsIContentFrameMessageManager);
-+    let sessionHistory = aDocShell.getInterface(Ci.nsIWebNavigation).sessionHistory;
-+
-+    messageManager.sendAsyncMessage("Browser:LoadURI", {
-+      loadOptions: {
-+        uri: aURI.spec,
-+        flags: Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-+        referrer: aReferrer ? aReferrer.spec : null,
-+        reloadInFreshProcess: !!aFreshProcess,
-+      },
-+      historyIndex: sessionHistory.requestedIndex,
-+    });
-+    return false;
-+  },
-+
-+  wrapHandlingUserInput: function(aWindow, aIsHandling, aCallback) {
-+    var handlingUserInput;
-+    try {
-+      handlingUserInput = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-+                                 .getInterface(Ci.nsIDOMWindowUtils)
-+                                 .setHandlingUserInput(aIsHandling);
-+      aCallback();
-+    } finally {
-+      handlingUserInput.destruct();
-+    }
-+  },
-+};
-diff -aurN platform/toolkit/modules/moz.build xulrunner-source/toolkit/modules/moz.build
---- platform/toolkit/modules/moz.build	2021-08-22 19:42:44.000000000 +0200
-+++ xulrunner-source/toolkit/modules/moz.build	2022-01-09 15:06:50.785501284 +0100
-@@ -27,6 +27,7 @@
-     'debug.js',
-     'DeferredTask.jsm',
-     'Deprecated.jsm',
-+    'E10SUtils.jsm',
-     'ExtensionStorage.jsm',
-     'FileUtils.jsm',
-     'Finder.jsm',
